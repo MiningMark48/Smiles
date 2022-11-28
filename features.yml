@@ -1,7 +1,4 @@
 # This file is for enabling/disabling bot features
-#   --
-#   See config.yml for controlling music
-#   --
 
 extensions:
   - extension: test
