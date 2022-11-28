@@ -3,7 +3,7 @@ import logging
 from b2sdk.v1 import B2Api, InMemoryAccountInfo
 
 
-log = logging.getLogger("tidalbot")
+log = logging.getLogger("smiles")
 
 
 class B2Backup:
