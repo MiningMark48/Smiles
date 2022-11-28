@@ -2,8 +2,6 @@ import asyncio
 import datetime
 import logging
 import time
-from discord import activity
-from discord.utils import get
 from logging.handlers import RotatingFileHandler
 
 import discord
@@ -22,6 +20,21 @@ log = logging.getLogger("smiles")
 start_time = time.time()
 
 
+def get_log_level(name: str):
+    valid = ["debug", "info", "warning", "error", "critical"]
+
+    log_cfg = name
+
+    if log_cfg.lower() in valid:
+        return getattr(logging, log_cfg.upper())
+
+    if log_cfg.lower() in CustomLogLevels.LOG_LEVELS:
+        return CustomLogLevels.LOG_LEVELS[log_cfg.lower()]
+
+    return logging.INFO
+
+
+# noinspection PyUnresolvedReferences
 class Smiles(commands.Bot):
     def __init__(self):
 
@@ -86,7 +99,7 @@ class Smiles(commands.Bot):
         current_time = datetime.datetime.now()
         filename = f'{log_file["file_location"]}/{current_time.strftime("%m%y")}.log'
 
-        log.setLevel(self.get_log_level(log_file["level"]))
+        log.setLevel(get_log_level(log_file["level"]))
 
         max_bytes = log_file["max_mebibytes"] * 1024 * 1024  # Bytes -> MiB conversion
         handler = RotatingFileHandler(filename=filename, encoding=log_file["encoding"],
@@ -102,26 +115,13 @@ class Smiles(commands.Bot):
         console_fmt = ConsoleColorFormatter(log_console["format"], log_console["date_time_format"],
                                             style=log_console["style"], colored=log_console["colored"])
         console.setFormatter(console_fmt)
-        console.setLevel(self.get_log_level(log_console["level"]))
+        console.setLevel(get_log_level(log_console["level"]))
         log.addHandler(console)
 
         CustomLogLevels.add_log_levels()
 
         log.info(f"Logging initialized. Logging to console and `{filename}`.")
         log.lnbrk("Logging complete")
-
-    def get_log_level(self, name: str):
-        valid = ["debug", "info", "warning", "error", "critical"]
-
-        log_cfg = name
-
-        if log_cfg.lower() in valid:
-            return getattr(logging, log_cfg.upper())
-
-        if log_cfg.lower() in CustomLogLevels.LOG_LEVELS:
-            return CustomLogLevels.LOG_LEVELS[log_cfg.lower()]
-
-        return logging.INFO
 
     def prefix(self, bot, message):
         pfx = self.bot_key
@@ -213,20 +213,18 @@ class Smiles(commands.Bot):
         # else:
         await self.process_commands(message)
 
-    async def on_guild_join(self, guild):
+    @staticmethod
+    async def on_guild_join(guild):
         log.info(f"Guild Joined | {guild.id} : {guild.name}")
 
-    async def on_guild_remove(self, guild):
+    @staticmethod
+    async def on_guild_remove(guild):
         delete_database_guild(str(guild.id))
 
         log.info(f"Guild Left | {guild.id} : {guild.name}")
 
 
-# log.info("Starting...")
-#
-# bot = Smiles()
-
-
+# noinspection PyUnresolvedReferences
 async def main():
     log.info("Starting...")
 
