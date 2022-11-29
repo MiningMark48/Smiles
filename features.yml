@@ -1,6 +1,7 @@
 # This file is for enabling/disabling bot features
 
 extensions:
+  - extension: owner
   - extension: test
   - extension: utility
 

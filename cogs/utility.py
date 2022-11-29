@@ -14,7 +14,7 @@ from fuzzywuzzy import process as fwp
 from util.decorators import delete_original
 
 start_time = time.time()
-log = logging.getLogger("tidalbot")
+log = logging.getLogger("smiles")
 
 
 # class TimezoneDropdown(discord.ui.Select['Utility']):
@@ -112,7 +112,7 @@ class Utility(commands.Cog, name="Utility"):
         list = ' '.join(str(x) for x in ctx.guild.emojis)
         await ctx.send(f'**Emojis: **{list}')
 
-    @commands.command()
+    @commands.hybrid_command()
     @delete_original()
     async def ping(self, ctx):
         """Latency of the bot"""
@@ -271,7 +271,7 @@ class Utility(commands.Cog, name="Utility"):
 
     # endregion
 
-    @commands.command()
+    @commands.hybrid_command()
     async def uptime(self, ctx):
         """See how long the bot has been running"""
         current_time = time.time()

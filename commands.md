@@ -1,5 +1,5 @@
 # Commands
-**Commands Available:** 9
+**Commands Available:** 10
 | Name    | Description | Category | Aliases | Subcommands |
 |---------|-------------|----------|---------|-------------|
 | commandsearch | Search for a command | Utility | cmdsearch, search | -- |
@@ -10,6 +10,7 @@
 | progress | See how far into the year we are. | Utility | progressbar | -- |
 | prune | Bulk delete messages (up to 100) | Utility | purge, nuke | -- |
 | say | Make the bot say something | Utility | -- | -- |
+| sync | Sync application commands  sync        : Global sync sync ~      : Current guild sync sync *      : Copies all global app commands to current guild and syncs sync ^      : Clears all commands from the current guild target and syncs (removes guild commands) sync 1 2    : Syncs guilds with ID 1 and 2 | Owner | -- | -- |
 | uptime | See how long the bot has been running | Utility | -- | -- |
 
 *Plus 0 hidden.*

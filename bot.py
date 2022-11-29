@@ -138,11 +138,6 @@ class Smiles(commands.Bot):
         if not self.do_run:
             return
 
-        # Music (Disabled for the time-being as issues are worked out)
-        # if self.load_music:
-        #     self.extns.append("cogs.music_adv")
-        #     # log.warn("Music is currently disabled. Ignoring config...")
-
         # Other extensions
         count = 0
         for extension in self.extns:
@@ -168,6 +163,12 @@ class Smiles(commands.Bot):
             count += 1
 
         log.success(f"Removed {count}/{len(bl_cmds)} commands")
+
+    # async def setup_hook(self):
+        # log.info("Syncing command tree...")
+        # self.tree.copy_global_to(guild=DEV_GUILD)
+        # await self.tree.sync(guild=DEV_GUILD)
+        # log.info("Synced command tree.")
 
     async def start_bot(self):
         if self.do_run:
