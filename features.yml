@@ -4,6 +4,7 @@ extensions:
   - extension: owner
   - extension: test
   - extension: utility
+  - extension: virtual_roles
 
 commands:
   - command: test

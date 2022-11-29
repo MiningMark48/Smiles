@@ -194,8 +194,6 @@ class Smiles(commands.Bot):
 
     async def on_message(self, message):
 
-        # log.debug(f"Message Content: {message.content}")
-
         if message.author == self.user:
             return
 
@@ -212,6 +210,7 @@ class Smiles(commands.Bot):
         # if message.webhook_id:
         #     await bot.invoke(ctx)
         # else:
+
         await self.process_commands(message)
 
     @staticmethod
