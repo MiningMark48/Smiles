@@ -5,6 +5,7 @@ extensions:
   - extension: test
   - extension: utility
   - extension: virtual_roles
+  - extension: virtual_reaction_roles
 
 commands:
   - command: test

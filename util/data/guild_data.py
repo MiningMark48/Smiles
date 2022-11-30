@@ -21,7 +21,9 @@ class GuildData:
         self.custom_commands = self.CustomCommands(meta, self.conn)
 
         self.virtual_roles = self.VirtualRoles(meta, self.conn)
-        # self.virtual_reaction_roles = self.VirtualReactionRoles(meta, self.conn)
+        self.virtual_role_emojis = self.VirtualRoleEmojis(meta, self.conn)
+        self.virtual_reaction_messages = self.VirtualReactionMessages(meta, self.conn)
+        self.virtual_reaction_roles = self.VirtualReactionRoles(meta, self.conn)
         # self.virtual_role_collection = self.VirtualRoleCollection(meta, self.conn)
 
         meta.create_all(engine)
@@ -121,41 +123,127 @@ class GuildData:
             self.virtual_roles = Table(
                 'virtual_roles', meta,
                 Column('id', Integer, primary_key=True),
-                Column('unique_identifier', String),
+                Column('uuid', String),
                 Column('role_name', String)
             )
 
             super().__init__(self.virtual_roles, self.conn)
 
-        def delete(self, unique_identifier: str):
-            val = self.fetch_by_role_id(unique_identifier)
+        def delete(self, uuid: str):
+            val = self.fetch_by_role_id(uuid)
             if val is not None:
-                rep = self.table.delete().where(self.table.columns.unique_identifier == unique_identifier)
+                rep = self.table.delete().where(self.table.columns.uuid == uuid)
                 self.conn.execute(rep)
                 return True
             else:
                 return False
 
         def fetch_all_by_role_id(self, r_id: str):
-            sel = self.table.select().where(self.table.columns.unique_identifier == r_id)
+            sel = self.table.select().where(self.table.columns.uuid == r_id)
             return list(self.conn.execute(sel))
 
         def fetch_by_role_id(self, r_id: str, val_pos=2):
             return ValueHelper.list_tuple_value(self.fetch_all_by_role_id(r_id), val_pos)
 
-        def insert(self, unique_identifier: str, role_name: str):
-            self.insert_([{'unique_identifier': unique_identifier, 'role_name': role_name}])
+        def insert(self, uuid: str, role_name: str):
+            self.insert_([{'uuid': uuid, 'role_name': role_name}])
 
-        def set(self, unique_identifier: str, role_name: str) -> Any:
-            val = self.fetch_by_role_id(unique_identifier)
+        def set(self, uuid: str, role_name: str) -> Any:
+            val = self.fetch_by_role_id(uuid)
             if val is not None:
-                rep = self.table.update().where(self.table.columns.unique_identifier == unique_identifier).values(
+                rep = self.table.update().where(self.table.columns.uuid == uuid).values(
                     role_name=role_name)
                 self.conn.execute(rep)
                 return role_name
             else:
-                self.insert(unique_identifier, role_name)
+                self.insert(uuid, role_name)
                 return role_name
+
+    class VirtualRoleEmojis(TableHelper):
+        def __init__(self, meta, conn):
+            self.conn = conn
+
+            self.virtual_role_emojis = Table(
+                'virtual_role_emojis', meta,
+                Column('id', Integer, primary_key=True),
+                Column('uuid', String),
+                Column('emoji', String)
+            )
+
+            super().__init__(self.virtual_role_emojis, self.conn)
+
+        def delete(self, uuid: str):
+            val = self.fetch_by_role_id(uuid)
+            if val is not None:
+                rep = self.table.delete().where(self.table.columns.uuid == uuid)
+                self.conn.execute(rep)
+                return True
+            else:
+                return False
+
+        def fetch_all_by_role_id(self, r_id: str):
+            sel = self.table.select().where(self.table.columns.uuid == r_id)
+            return list(self.conn.execute(sel))
+
+        def fetch_by_role_id(self, r_id: str, val_pos=2):
+            return ValueHelper.list_tuple_value(self.fetch_all_by_role_id(r_id), val_pos)
+
+        def insert(self, uuid: str, emoji: str):
+            self.insert_([{'uuid': uuid, 'emoji': emoji}])
+
+        def set(self, uuid: str, emoji: str) -> Any:
+            val = self.fetch_by_role_id(uuid)
+            if val is not None:
+                rep = self.table.update().where(self.table.columns.uuid == uuid).values(
+                    emoji=emoji)
+                self.conn.execute(rep)
+                return emoji
+            else:
+                self.insert(uuid, emoji)
+                return emoji
+
+    class VirtualReactionMessages(TableHelper):
+        def __init__(self, meta, conn):
+            self.conn = conn
+
+            self.virtual_reaction_messages = Table(
+                'virtual_reaction_messages', meta,
+                Column('id', Integer, primary_key=True),
+                Column('msg_uuid', String),
+                Column('message_id', Integer)
+            )
+
+            super().__init__(self.virtual_reaction_messages, self.conn)
+
+        def delete(self, uuid: str):
+            val = self.fetch_by_msg_uuid(uuid)
+            if val is not None:
+                rep = self.table.delete().where(self.table.columns.msg_uuid == uuid)
+                self.conn.execute(rep)
+                return True
+            else:
+                return False
+
+        def fetch_all_by_msg_uuid(self, msg_uuid: str):
+            sel = self.table.select().where(self.table.columns.msg_uuid == msg_uuid)
+            return list(self.conn.execute(sel))
+
+        def fetch_by_msg_uuid(self, msg_uuid: str, val_pos=2):
+            return ValueHelper.list_tuple_value(self.fetch_all_by_msg_uuid(msg_uuid), val_pos)
+
+        def insert(self, msg_uuid: str, message_id: str):
+            self.insert_([{'msg_uuid': msg_uuid, 'message_id': message_id}])
+
+        def set(self, msg_uuid: str, message_id: str) -> Any:
+            val = self.fetch_by_msg_uuid(msg_uuid)
+            if val is not None:
+                rep = self.table.update().where(self.table.columns.msg_uuid == msg_uuid).values(
+                    message_id=message_id)
+                self.conn.execute(rep)
+                return message_id
+            else:
+                self.insert(msg_uuid, message_id)
+                return message_id
 
     class VirtualReactionRoles(TableHelper):
         def __init__(self, meta, conn):
@@ -164,31 +252,41 @@ class GuildData:
             self.virtual_reaction_roles = Table(
                 'virtual_reaction_roles', meta,
                 Column('id', Integer, primary_key=True),
-                Column('message_id', Integer),
-                Column('unique_identifier', String),
-                Column('emoji', String)
+                Column('msg_uuid', String),
+                Column('role_uuid', String)
             )
 
             super().__init__(self.virtual_reaction_roles, self.conn)
 
-        def delete(self, message_id: int):
-            val = self.fetch_by_message_id(message_id)
+        def delete(self, uuid: str):
+            val = self.fetch_by_msg_uuid(uuid)
             if val is not None:
-                rep = self.table.delete().where(self.table.columns.message_id == message_id)
+                rep = self.table.delete().where(self.table.columns.uuid == uuid)
                 self.conn.execute(rep)
                 return True
             else:
                 return False
 
-        def fetch_all_by_message_id(self, m_id: int):
-            sel = self.table.select().where(self.table.columns.message_id == m_id)
+        def fetch_all_by_msg_uuid(self, msg_uuid: str):
+            sel = self.table.select().where(self.table.columns.uuid == msg_uuid)
             return list(self.conn.execute(sel))
 
-        def fetch_by_message_id(self, m_id: int, val_pos=2):
-            return ValueHelper.list_tuple_value(self.fetch_all_by_message_id(m_id), val_pos)
+        def fetch_by_msg_uuid(self, msg_uuid: str, val_pos=1):
+            return ValueHelper.list_tuple_value(self.fetch_all_by_msg_uuid(msg_uuid), val_pos)
 
-        def insert(self, message_id: int, role_id: int, emoji: str):
-            self.insert_([{'message_id': message_id, 'role_id': role_id, 'emoji': emoji}])
+        def insert(self, msg_uuid: str, role_uuid: str):
+            self.insert_([{'msg_uuid': msg_uuid, 'role_uuid': role_uuid}])
+
+        def set(self, msg_uuid: str, role_uuid: str) -> Any:
+            val = self.fetch_by_msg_uuid(msg_uuid)
+            if val is not None:
+                rep = self.table.update().where(self.table.columns.msg_uuid == msg_uuid).values(
+                    role_uuid=role_uuid)
+                self.conn.execute(rep)
+                return role_uuid
+            else:
+                self.insert(msg_uuid, role_uuid)
+                return role_uuid
 
     class VirtualRoleCollection(TableHelper):
         def __init__(self, meta, conn):
@@ -198,7 +296,7 @@ class GuildData:
                 'virtual_role_collection', meta,
                 Column('id', Integer, primary_key=True),
                 Column('user_id', Integer),
-                Column('unique_identifier', String)
+                Column('uuid', String)
             )
 
             super().__init__(self.virtual_role_collection, self.conn)
@@ -219,5 +317,5 @@ class GuildData:
         def fetch_by_role_id(self, m_id: int, val_pos=2):
             return ValueHelper.list_tuple_value(self.fetch_all_by_user_id(m_id), val_pos)
 
-        def insert(self, user_id: int, unique_identifier: str):
-            self.insert_([{'user_id': user_id, 'unique_identifier': unique_identifier}])
+        def insert(self, user_id: int, uuid: str):
+            self.insert_([{'user_id': user_id, 'uuid': uuid}])
