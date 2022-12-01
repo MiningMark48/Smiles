@@ -6,7 +6,6 @@ import time
 from discord import Message, TextChannel
 from discord.ext import commands
 from discord.ext.commands import Context
-from discord.utils import escape_markdown
 
 from util.data.guild_data import GuildData
 
@@ -22,7 +21,21 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.group(name="virtualreaction", aliases=["virtreact"])
+    async def wait_for_response(self, ctx: Context):
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel and len(m.content) <= 100
+
+        try:
+            return await self.bot.wait_for('message', check=check, timeout=30)
+        except asyncio.TimeoutError:
+            await ctx.send("Timed out.", delete_after=7)
+            return None
+
+    @staticmethod
+    async def send_cancel_message(ctx: Context):
+        await ctx.send("Ok, no worries!", delete_after=7)
+
+    @commands.group(name="virtualreaction", aliases=["virtreact", "vreaction", "vreact"])
     @commands.cooldown(1, 2)
     @commands.guild_only()
     async def virtual_reaction(self, ctx):
@@ -38,7 +51,7 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
             new_ctx = await self.bot.get_context(msg, cls=type(ctx))
             await self.bot.invoke(new_ctx)
 
-    @virtual_reaction.command(name="addtomessage", aliases=["addtomsg", "add"])
+    @virtual_reaction.command(name="addtomessage", aliases=["addtomsg", "addrole", "setrole", "add", "set"])
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
     async def virtual_add_to_msg(self, ctx: Context, role_uuid: str, msg_uuid: str, channel: TextChannel) -> None:
@@ -49,48 +62,35 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
 
         Role_UUID: The unique identifier of the role you want to add to the message.
         Msg_UUID: The unique identifier of the message you want to add to.
+        Channel: The channel the message is located.
         """
-
-        def check(m):
-            return m.author == ctx.author and m.channel == ctx.channel and len(m.content) <= 100
-
-        async def wait_for_response():
-            try:
-                return await self.bot.wait_for('message', check=check, timeout=30)
-            except asyncio.TimeoutError:
-                await ctx.send("Timed out.", delete_after=7)
-                return None
-
-        async def send_cancel_message():
-            await ctx.send("Ok, no worries!", delete_after=7)
-
-        log.debug("CALLED")
 
         role_uuid = prepare_id(role_uuid)
         msg_uuid = prepare_id(msg_uuid)
 
-        message_id = GuildData(str(ctx.guild.id)).virtual_reaction_messages.fetch_by_msg_uuid(msg_uuid)
+        combined_id = GuildData(str(ctx.guild.id)).virtual_reaction_messages.fetch_by_msg_uuid(msg_uuid)
 
-        log.debug(message_id)
+        if combined_id:
+            message_id = combined_id.split("_")[0]
 
-        if message_id:
             msg_creating = await ctx.send("Adding reactions to existing message...")
 
-            log.debug(f"FOUND! {message_id}")
-
             reaction_message = await channel.fetch_message(message_id)
-
-            log.debug(reaction_message)
 
             reaction_emoji = GuildData(str(ctx.guild.id)).virtual_role_emojis.fetch_by_role_id(role_uuid)
             if not reaction_emoji:
                 await ctx.send("Error! Reaction emoji could not be retrieved.")
                 return
 
-            log.debug(reaction_message.reactions)
+            # log.debug(reaction_message.reactions)
 
-            if reaction_emoji in reaction_message.reactions:    # TODO: make this check reactions (reaction emoji
-                # needs to be reaction obj)
+            for reaction in reaction_message.reactions:
+                if reaction_emoji == reaction.emoji:
+                    await msg_creating.edit(content="Error! Unable to add role as the emoji associated with that role "
+                                                    "is already on that message with a reaction.", delete_after=7)
+                    return
+
+            if reaction_emoji in reaction_message.reactions:
                 await ctx.send("Error! Message already has that emoji as a reaction.")
                 return
 
@@ -98,11 +98,10 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
                 await ctx.send("Error! Message has max amount of reactions!")
                 return
 
-            # log.debug(reaction_emoji)
-
             await reaction_message.add_reaction(reaction_emoji)
 
-            GuildData(str(ctx.guild.id)).virtual_reaction_messages.set(msg_uuid, reaction_message.id)
+            combined_id = f"{reaction_message.id}_{channel.id}"
+            GuildData(str(ctx.guild.id)).virtual_reaction_messages.set(msg_uuid, combined_id)
 
             await msg_creating.edit(content="Reactions added.", delete_after=7)
 
@@ -114,16 +113,15 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
         messages.append(await ctx.send(
             "It looks like that message doesn't exist yet, would you like to create it? `Yes (Y) / No (N)`"))
 
-        response = await wait_for_response()
+        response = await self.wait_for_response(ctx)
         messages.append(response)
 
-        # log.debug(response)
-
         if not response:
+            await ctx.send("Error!", delete_after=7)
             return
 
         if response.content.lower() not in ["yes", "y"]:
-            await send_cancel_message()
+            await self.send_cancel_message(ctx)
             return
 
         # messages.append(await ctx.send("What channel would you like to send your message in? Please mention the "
@@ -148,20 +146,17 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
         # log.debug(channel)
 
         messages.append(await ctx.send("What would you like the message to say?"))
-        response: Message = await wait_for_response()
+        response: Message = await self.wait_for_response(ctx)
         messages.append(response)
         if not response:
-            await send_cancel_message()
+            await self.send_cancel_message(ctx)
             return
 
         message_content = response.content[:2000]
 
-        log.debug(message_content)
-
         msg_creating = await ctx.send("Creating message...")
 
         reaction_message = await channel.send(message_content)
-        log.debug(reaction_message)
 
         reaction_emoji = GuildData(str(ctx.guild.id)).virtual_role_emojis.fetch_by_role_id(role_uuid)
         if not reaction_emoji:
@@ -170,52 +165,102 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
 
         await reaction_message.add_reaction(reaction_emoji)
 
-        GuildData(str(ctx.guild.id)).virtual_reaction_messages.set(msg_uuid, reaction_message.id)
+        combined_id = f"{reaction_message.id}_{channel.id}"
+        GuildData(str(ctx.guild.id)).virtual_reaction_messages.set(msg_uuid, combined_id)
 
         await msg_creating.edit(content="Message created.", delete_after=7)
         await ctx.channel.delete_messages(messages)
 
-    @virtual_reaction.command(name="delete", aliases=["remove"])
+    @virtual_reaction.command(name="removerolefrommsg", aliases=["deleterole", "removerole", "remrole", "delrole"])
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
-    async def virtual_delete(self, ctx: Context, role_id: str) -> None:
+    async def virtual_remove_from_message(self, ctx: Context, role_uuid: str, msg_uuid: str, channel: TextChannel) -> None:
         """
-        Delete virtual role from the server
+        Remove a virtual role from a message.
+
+        Role_UUID: The unique identifier of the role you want to remove from a message.
+        Msg_UUID: The unique identifier of the message you want to remove from.
+        Channel: The channel the message is located.
         """
 
-        role_id = prepare_id(role_id)
+        role_uuid = prepare_id(role_uuid)
+        msg_uuid = prepare_id(msg_uuid)
 
-        result = GuildData(str(ctx.guild.id)).virtual_roles.delete(role_id)
+        combined_id = GuildData(str(ctx.guild.id)).virtual_reaction_messages.fetch_by_msg_uuid(msg_uuid)
 
-        if result:
-            await ctx.send(f"Removed **{role_id}** from the server.")
-        else:
-            await ctx.send(f"Unable to remove **{role_id}** from the server.")
+        if combined_id:
+            message_id = combined_id.split("_")[0]
+            msg_removing = await ctx.send("Removing reactions from existing message...")
 
-    @virtual_reaction.command(name="list", aliases=["roles"])
+            reaction_message = await channel.fetch_message(message_id)
+
+            reaction_emoji = GuildData(str(ctx.guild.id)).virtual_role_emojis.fetch_by_role_id(role_uuid)
+            if not reaction_emoji:
+                await ctx.send("Error! Reaction emoji could not be retrieved.")
+                return
+
+            await reaction_message.clear_reaction(reaction_emoji)
+
+            await msg_removing.edit(content=f"Removed **{role_uuid}** role from **{msg_uuid}** message.",
+                                    delete_after=7)
+
+            messages = []
+            log.debug(len(reaction_message.reactions))
+            # Subtracts one for the previously deleted message as the list hasn't updated yet
+            if (len(reaction_message.reactions) - 1) <= 0:
+                messages.append(await ctx.send("I noticed that the message has no reactions now, would you like me to "
+                                               "delete the message now? `Yes (Y) / No (No)`"))
+                response: Message = await self.wait_for_response(ctx)
+                messages.append(response)
+                if not response:
+                    await self.send_cancel_message(ctx)
+                    return
+
+                if response.content.lower() not in ["yes", "y"]:
+                    await self.send_cancel_message(ctx)
+                    await ctx.channel.delete_messages(messages)
+                    return
+
+                deleting_msg = await ctx.send("Ok, deleting now!")
+
+                GuildData(str(ctx.guild.id)).virtual_reaction_messages.delete(msg_uuid)
+                await reaction_message.delete()
+
+                await deleting_msg.edit(content="Message deleted!", delete_after=7)
+                await ctx.channel.delete_messages(messages)
+
+    @virtual_reaction.command(name="listmessages", aliases=["messages", "list"])
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
     async def virtual_list(self, ctx: Context) -> None:
         """
-        List virtual roles on the server
+        List virtual reaction roles on the server
         """
 
-        guild_virtual_roles = GuildData(str(ctx.guild.id)).virtual_roles.fetch_all()
+        def make_msg_link(message_id, channel_id, guild_id):
+            return f"<https://discord.com/channels/{guild_id}/{channel_id}/{message_id}>"
 
-        if not len(guild_virtual_roles) > 0:
-            await ctx.send("No tags available!")
+        guild_virtual_msgs = GuildData(str(ctx.guild.id)).virtual_reaction_messages.fetch_all()
+
+        if not len(guild_virtual_msgs) > 0:
+            await ctx.send("No messages available!")
             return
 
-        tags = f"{ctx.guild.name} Virtual Roles\n\n"
-        for t in sorted(guild_virtual_roles):
-            value = t[2]
-            value = value.replace("\n", "")
-            tags += f"[{t[1]}] {escape_markdown(value[:100])}{'...' if len(value) > 100 else ''}\n"
+        tags = f"**{ctx.guild.name} Virtual Reaction Role Messages**\n\n"
+        i = 0
+        for t in sorted(guild_virtual_msgs):
+            ids = t[2].split("_")
+            tags += f"`{t[1]}` {make_msg_link(ids[0], ids[1], ctx.guild.id)}\n"
+            i += 1
 
         parts = [(tags[i:i + 750]) for i in range(0, len(tags), 750)]
         for part in parts:
             part = part.replace("```", "")
-            await ctx.send(f"```{part}```")
+            await ctx.send(f"{part}")
+
+    # TODO: Add command to delete an entire message
+    # TODO: Make messages use embeds
+    # TODO: Set up reaction event to handle reactions!
 
 
 async def setup(bot):

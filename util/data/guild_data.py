@@ -210,7 +210,7 @@ class GuildData:
                 'virtual_reaction_messages', meta,
                 Column('id', Integer, primary_key=True),
                 Column('msg_uuid', String),
-                Column('message_id', Integer)
+                Column('message_id', String)
             )
 
             super().__init__(self.virtual_reaction_messages, self.conn)
@@ -296,7 +296,7 @@ class GuildData:
                 'virtual_role_collection', meta,
                 Column('id', Integer, primary_key=True),
                 Column('user_id', Integer),
-                Column('uuid', String)
+                Column('role_uuid', String)
             )
 
             super().__init__(self.virtual_role_collection, self.conn)
@@ -314,8 +314,8 @@ class GuildData:
             sel = self.table.select().where(self.table.columns.user_id == u_id)
             return list(self.conn.execute(sel))
 
-        def fetch_by_role_id(self, m_id: int, val_pos=2):
-            return ValueHelper.list_tuple_value(self.fetch_all_by_user_id(m_id), val_pos)
+        def fetch_by_role_id(self, u_id: int, val_pos=2):
+            return ValueHelper.list_tuple_value(self.fetch_all_by_user_id(u_id), val_pos)
 
-        def insert(self, user_id: int, uuid: str):
-            self.insert_([{'user_id': user_id, 'uuid': uuid}])
+        def insert(self, user_id: int, role_uuid: str):
+            self.insert_([{'user_id': user_id, 'role_uuid': role_uuid}])

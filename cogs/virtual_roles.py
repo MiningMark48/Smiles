@@ -104,7 +104,7 @@ class VirtualRoles(commands.Cog, name="Virtual Roles"):
         sorted_emojis = sorted(guild_virtual_role_emojis)
 
         if not len(guild_virtual_roles) > 0:
-            await ctx.send("No tags available!")
+            await ctx.send("No roles available!")
             return
 
         tags = f"{ctx.guild.name} Virtual Roles\n\n"
