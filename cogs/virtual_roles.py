@@ -24,7 +24,7 @@ class VirtualRoles(commands.Cog, name="Virtual Roles"):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.group(name="virtualroles", aliases=["virtualrole", "virtrole"])
+    @commands.group(name="virtualroles", aliases=["virtualrole", "virtrole", "vrole"])
     @commands.cooldown(1, 2)
     @commands.guild_only()
     async def virtual_roles(self, ctx):

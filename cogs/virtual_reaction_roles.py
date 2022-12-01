@@ -102,6 +102,7 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
 
             combined_id = f"{reaction_message.id}_{channel.id}"
             GuildData(str(ctx.guild.id)).virtual_reaction_messages.set(msg_uuid, combined_id)
+            GuildData(str(ctx.guild.id)).virtual_reaction_roles.insert(msg_uuid, role_uuid)
 
             await msg_creating.edit(content="Reactions added.", delete_after=7)
 
@@ -167,6 +168,7 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
 
         combined_id = f"{reaction_message.id}_{channel.id}"
         GuildData(str(ctx.guild.id)).virtual_reaction_messages.set(msg_uuid, combined_id)
+        GuildData(str(ctx.guild.id)).virtual_reaction_roles.insert(msg_uuid, role_uuid)
 
         await msg_creating.edit(content="Message created.", delete_after=7)
         await ctx.channel.delete_messages(messages)
@@ -180,7 +182,7 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
 
         Role_UUID: The unique identifier of the role you want to remove from a message.
         Msg_UUID: The unique identifier of the message you want to remove from.
-        Channel: The channel the message is located.
+        Channel: The channel where the message is located.
         """
 
         role_uuid = prepare_id(role_uuid)
@@ -200,6 +202,8 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
                 return
 
             await reaction_message.clear_reaction(reaction_emoji)
+
+            GuildData(str(ctx.guild.id)).virtual_reaction_roles.delete_where(msg_uuid, role_uuid)
 
             await msg_removing.edit(content=f"Removed **{role_uuid}** role from **{msg_uuid}** message.",
                                     delete_after=7)
@@ -228,6 +232,32 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
 
                 await deleting_msg.edit(content="Message deleted!", delete_after=7)
                 await ctx.channel.delete_messages(messages)
+
+    @virtual_reaction.command(name="deletemessage", aliases=["removemessage", "delmsg", "remmsg"])
+    @commands.guild_only()
+    @commands.has_permissions(manage_guild=True)
+    async def virtual_delete_message(self, ctx: Context, msg_uuid: str, channel: TextChannel) -> None:
+        """
+        Remove a virtual role message.
+
+        Msg_UUID: The unique identifier of the message you want to remove.
+        Channel: The channel where the message is located.
+        """
+
+        msg_uuid = prepare_id(msg_uuid)
+
+        combined_id = GuildData(str(ctx.guild.id)).virtual_reaction_messages.fetch_by_msg_uuid(msg_uuid)
+
+        if combined_id:
+            message_id = combined_id.split("_")[0]
+            msg_removing = await ctx.send("Removing message...")
+
+            reaction_message = await channel.fetch_message(message_id)
+
+            GuildData(str(ctx.guild.id)).virtual_reaction_messages.delete(msg_uuid)
+            await reaction_message.delete()
+
+            await msg_removing.edit(content=f"Removed the **{msg_uuid}** message.",  delete_after=7)
 
     @virtual_reaction.command(name="listmessages", aliases=["messages", "list"])
     @commands.guild_only()
@@ -261,6 +291,7 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
     # TODO: Add command to delete an entire message
     # TODO: Make messages use embeds
     # TODO: Set up reaction event to handle reactions!
+    # TODO: Delete all links to a role when a role is delete from the virtual roles list
 
 
 async def setup(bot):

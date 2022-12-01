@@ -24,7 +24,7 @@ class GuildData:
         self.virtual_role_emojis = self.VirtualRoleEmojis(meta, self.conn)
         self.virtual_reaction_messages = self.VirtualReactionMessages(meta, self.conn)
         self.virtual_reaction_roles = self.VirtualReactionRoles(meta, self.conn)
-        # self.virtual_role_collection = self.VirtualRoleCollection(meta, self.conn)
+        self.virtual_role_collection = self.VirtualRoleCollection(meta, self.conn)
 
         meta.create_all(engine)
 
@@ -188,6 +188,13 @@ class GuildData:
         def fetch_by_role_id(self, r_id: str, val_pos=2):
             return ValueHelper.list_tuple_value(self.fetch_all_by_role_id(r_id), val_pos)
 
+        def fetch_all_by_emoji(self, emoji: str):
+            sel = self.table.select().where(self.table.columns.emoji == emoji)
+            return list(self.conn.execute(sel))
+
+        def fetch_by_emoji(self, emoji: str, val_pos=3):
+            return ValueHelper.list_tuple_value(self.fetch_all_by_emoji(emoji), val_pos)
+
         def insert(self, uuid: str, emoji: str):
             self.insert_([{'uuid': uuid, 'emoji': emoji}])
 
@@ -288,6 +295,16 @@ class GuildData:
                 self.insert(msg_uuid, role_uuid)
                 return role_uuid
 
+        def delete_where(self, msg_uuid: str, role_uuid: str) -> Any:
+            val = self.fetch_by_msg_uuid(msg_uuid)
+            if val is not None:
+                rep = self.table.delete().where(self.table.columns.msg_uuid == msg_uuid).values(
+                    role_uuid=role_uuid)
+                self.conn.execute(rep)
+                return True
+            else:
+                return False
+
     class VirtualRoleCollection(TableHelper):
         def __init__(self, meta, conn):
             self.conn = conn
@@ -302,7 +319,7 @@ class GuildData:
             super().__init__(self.virtual_role_collection, self.conn)
 
         def delete(self, user_id: int):
-            val = self.fetch_by_role_id(user_id)
+            val = self.fetch_by_user_id(user_id)
             if val is not None:
                 rep = self.table.delete().where(self.table.columns.user_id == user_id)
                 self.conn.execute(rep)
@@ -314,8 +331,18 @@ class GuildData:
             sel = self.table.select().where(self.table.columns.user_id == u_id)
             return list(self.conn.execute(sel))
 
-        def fetch_by_role_id(self, u_id: int, val_pos=2):
+        def fetch_by_user_id(self, u_id: int, val_pos=1):
             return ValueHelper.list_tuple_value(self.fetch_all_by_user_id(u_id), val_pos)
 
         def insert(self, user_id: int, role_uuid: str):
             self.insert_([{'user_id': user_id, 'role_uuid': role_uuid}])
+
+        def delete_where(self, user_id: int, role_uuid: str) -> Any:
+            val = self.fetch_by_user_id(user_id)
+            if val is not None:
+                rep = self.table.delete().where(self.table.columns.user_id == user_id).values(
+                    role_uuid=role_uuid)
+                self.conn.execute(rep)
+                return True
+            else:
+                return False
