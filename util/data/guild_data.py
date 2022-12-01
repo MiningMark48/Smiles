@@ -312,13 +312,13 @@ class GuildData:
             self.virtual_role_collection = Table(
                 'virtual_role_collection', meta,
                 Column('id', Integer, primary_key=True),
-                Column('user_id', Integer),
+                Column('user_id', String),
                 Column('role_uuid', String)
             )
 
             super().__init__(self.virtual_role_collection, self.conn)
 
-        def delete(self, user_id: int):
+        def delete(self, user_id: str):
             val = self.fetch_by_user_id(user_id)
             if val is not None:
                 rep = self.table.delete().where(self.table.columns.user_id == user_id)
@@ -327,22 +327,30 @@ class GuildData:
             else:
                 return False
 
-        def fetch_all_by_user_id(self, u_id: int):
+        def fetch_all_by_user_id(self, u_id: str):
             sel = self.table.select().where(self.table.columns.user_id == u_id)
             return list(self.conn.execute(sel))
 
-        def fetch_by_user_id(self, u_id: int, val_pos=1):
+        def fetch_by_user_id(self, u_id: str, val_pos=1):
             return ValueHelper.list_tuple_value(self.fetch_all_by_user_id(u_id), val_pos)
 
-        def insert(self, user_id: int, role_uuid: str):
+        def insert(self, user_id: str, role_uuid: str):
             self.insert_([{'user_id': user_id, 'role_uuid': role_uuid}])
 
-        def delete_where(self, user_id: int, role_uuid: str) -> Any:
+            print(self.fetch_all_by_user_id(user_id))
+
+        def delete_where(self, user_id: str, r_id: str) -> Any:
             val = self.fetch_by_user_id(user_id)
             if val is not None:
-                rep = self.table.delete().where(self.table.columns.user_id == user_id).values(
-                    role_uuid=role_uuid)
-                self.conn.execute(rep)
+                print(r_id)
+                print(type(r_id))
+
+                # print(self.fetch_all_by_user_id(user_id))
+                print(list(self.conn.execute(self.table.select().where(self.table.columns.user_id == user_id))))
+                print(list(self.conn.execute(self.table.select().where(self.table.columns.user_id == user_id).values(role_uuid=r_id))))
+
+                # rep = self.table.delete().where(self.table.columns.user_id == user_id).values(role_uuid=r_id)
+                # self.conn.execute(rep)
                 return True
             else:
                 return False

@@ -42,7 +42,7 @@ class VirtualReactionRoleHandler(commands.Cog, name="Virtual Reaction Role Handl
         if not guild:
             return
 
-        user = payload.member if payload.member else await guild.fetch_member(reaction_user_id)
+        user = payload.member if payload.member else await guild.fetch_member(int(reaction_user_id))
 
         if user == self.bot.user:
             return
@@ -94,14 +94,16 @@ class VirtualReactionRoleHandler(commands.Cog, name="Virtual Reaction Role Handl
             log.debug("Add role")
 
             # TODO: Only add if the db doesn't already have it
-            GuildData(reaction_guild_id).virtual_role_collection.insert(int(reaction_user_id), reaction_role_uuid)
+            GuildData(reaction_guild_id).virtual_role_collection.insert(str(reaction_user_id), reaction_role_uuid)
 
             # TODO: Add role
         else:
             log.debug("Remove role")
 
+            # GuildData(reaction_guild_id).virtual_role_collection.delete_all()
+
             # TODO: Get removal from DB working correctly
-            result = GuildData(reaction_guild_id).virtual_role_collection.delete_where(int(reaction_user_id), reaction_role_uuid)
+            result = GuildData(reaction_guild_id).virtual_role_collection.delete_where(str(reaction_user_id), reaction_role_uuid)
             log.debug(f"Delete result: {result}")
             # TODO: Take role away
 
