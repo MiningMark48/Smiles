@@ -121,6 +121,12 @@ class VirtualReactionRoleHandler(commands.Cog, name="Virtual Reaction Role Handl
 
         # TODO: Delete any database entries when the message is deleted
 
+        log.debug(payload.message_id)
+
+        reaction_message = GuildData(str(payload.guild_id)).virtual_reaction_messages.fetch_by_msg_id(payload.message_id, 2)
+        log.debug(reaction_message)
+        # GuildData(str(ctx.guild.id)).virtual_reaction_messages.delete(msg_uuid)
+
         return
 
         # guild = self.bot.get_guild(payload.guild_id)

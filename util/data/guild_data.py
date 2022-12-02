@@ -238,6 +238,13 @@ class GuildData:
         def fetch_by_msg_uuid(self, msg_uuid: str, val_pos=2):
             return ValueHelper.list_tuple_value(self.fetch_all_by_msg_uuid(msg_uuid), val_pos)
 
+        def fetch_all_by_msg_id(self, msg_id: str):
+            sel = self.table.select().where(self.table.columns.message_id == msg_id)
+            return list(self.conn.execute(sel))
+
+        def fetch_by_msg_id(self, msg_id: str, val_pos=1):
+            return ValueHelper.list_tuple_value(self.fetch_all_by_msg_id(msg_id), val_pos)
+
         def insert(self, msg_uuid: str, message_id: str):
             self.insert_([{'msg_uuid': msg_uuid, 'message_id': message_id}])
 
