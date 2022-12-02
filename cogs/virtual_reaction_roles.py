@@ -288,9 +288,7 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
             part = part.replace("```", "")
             await ctx.send(f"{part}")
 
-    # TODO: Add command to delete an entire message
     # TODO: Make messages use embeds
-    # TODO: Set up reaction event to handle reactions!
     # TODO: Delete all links to a role when a role is delete from the virtual roles list
 
 

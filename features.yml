@@ -4,6 +4,7 @@ extensions:
   - extension: owner
   - extension: test
   - extension: utility
+  - extension: virtual_profiles
   - extension: virtual_roles
   - extension: virtual_reaction_roles
   - extension: virtual_reaction_handler

@@ -88,26 +88,33 @@ class VirtualReactionRoleHandler(commands.Cog, name="Virtual Reaction Role Handl
         role_names = GuildData(reaction_guild_id).virtual_roles.fetch_all_by_role_id(reaction_role_uuid)
         role_name = role_names[0][2]
 
-        await reaction_channel.send(f"You clicked the `{role_name}` role!", delete_after=3)
+        # await reaction_channel.send(f"You clicked the `{role_name}` role!", delete_after=3)
 
         if add_mode:
-            log.debug("Add role")
+            # log.debug("Add role")
 
-            # TODO: Only add if the db doesn't already have it
+            check_for = GuildData(reaction_guild_id).virtual_role_collection.fetch_by_user_id_where(
+                str(reaction_user_id), reaction_role_uuid)
+            if check_for:
+                return
+
             GuildData(reaction_guild_id).virtual_role_collection.insert(str(reaction_user_id), reaction_role_uuid)
 
-            # TODO: Add role
+            await user.send(f"Added the `{role_name}` role!")
         else:
-            log.debug("Remove role")
+            # log.debug("Remove role")
 
             # GuildData(reaction_guild_id).virtual_role_collection.delete_all()
 
-            # TODO: Get removal from DB working correctly
-            result = GuildData(reaction_guild_id).virtual_role_collection.delete_where(str(reaction_user_id), reaction_role_uuid)
-            log.debug(f"Delete result: {result}")
-            # TODO: Take role away
+            result = GuildData(reaction_guild_id).virtual_role_collection.delete_where(
+                str(reaction_user_id), reaction_role_uuid)
+            if result:
+                await user.send(f"Removed the `{role_name}` role!")
 
-        log.debug(GuildData(reaction_guild_id).virtual_role_collection.fetch_all())
+        # log.debug(GuildData(reaction_guild_id).virtual_role_collection.fetch_all())
+
+        # await reaction_channel.send(f"Your roles: `{', '.join(x for _, _, x in GuildData(
+        # reaction_guild_id).virtual_role_collection.fetch_all())}`", delete_after=3)
 
     @commands.Cog.listener("on_raw_message_delete")
     async def on_raw_message_delete(self, payload):

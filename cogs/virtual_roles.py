@@ -61,13 +61,14 @@ class VirtualRoles(commands.Cog, name="Virtual Roles"):
         check_emoji = discord.PartialEmoji.from_str(emoji)
         if check_emoji.is_custom_emoji():
             if await ctx.guild.fetch_emoji(check_emoji.id) is None:
-                await ctx.send("That emoji could not be found. Please try a different emoji.")
+                await msg.edit(content="That emoji could not be found. Please try a different emoji.")
                 return
+
+        # TODO: Make sure emoji *is* an emoji and not just text
 
         name = GuildData(str(ctx.guild.id)).virtual_roles.set(role_id, display_name)
         e = GuildData(str(ctx.guild.id)).virtual_role_emojis.set(role_id, emoji)
 
-        # await ctx.send(f"Set **{role_id}** as *{display_name}*.")
         await msg.edit(content=f"Set **{role_id}** as *{name}* with {e} as the emoji.")
 
     @virtual_roles.command(name="delete", aliases=["remove"])
