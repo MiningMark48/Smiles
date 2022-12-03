@@ -275,14 +275,14 @@ class GuildData:
         def delete(self, uuid: str):
             val = self.fetch_by_msg_uuid(uuid)
             if val is not None:
-                rep = self.table.delete().where(self.table.columns.uuid == uuid)
+                rep = self.table.delete().where(self.table.columns.msg_uuid == uuid)
                 self.conn.execute(rep)
                 return True
             else:
                 return False
 
         def fetch_all_by_msg_uuid(self, msg_uuid: str):
-            sel = self.table.select().where(self.table.columns.uuid == msg_uuid)
+            sel = self.table.select().where(self.table.columns.msg_uuid == msg_uuid)
             return list(self.conn.execute(sel))
 
         def fetch_by_msg_uuid(self, msg_uuid: str, val_pos=1):

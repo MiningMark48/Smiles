@@ -119,30 +119,21 @@ class VirtualReactionRoleHandler(commands.Cog, name="Virtual Reaction Role Handl
     @commands.Cog.listener("on_raw_message_delete")
     async def on_raw_message_delete(self, payload):
 
-        # TODO: Delete any database entries when the message is deleted
-        #   - Delete any message references in all databases:
-        #       - Virtual_Reaction_Messages
-        #       - Virtual_Reaction_Roles
-        #   - Add check for "if message is from bot"
-        #   - Look into why this event triggers with reactions also
-
-        log.debug(payload)
+        if payload.cached_message is not None:
+            if payload.cached_message.author.id != self.bot.user.id:
+                return
 
         combined_id = f"{payload.message_id}_{payload.channel_id}"
+
         reaction_message = GuildData(str(payload.guild_id)).virtual_reaction_messages.fetch_all_by_msg_id(combined_id)
+
+        if len(reaction_message) <= 0:
+            return
+
         rm_uuid = reaction_message[0][1]
-        log.debug(rm_uuid)
 
-        # log.debug(GuildData(str(payload.guild_id)).virtual_reaction_messages.fetch_all())
-        # GuildData(str(ctx.guild.id)).virtual_reaction_messages.delete(msg_uuid)
-
-        # guild = self.bot.get_guild(payload.guild_id)
-        #
-        # reactors = GuildData(str(guild.id)).reactors
-        # if len(reactors.fetch_all()) <= 0:
-        #     return
-        #
-        # reactors.delete(payload.message_id)
+        GuildData(str(payload.guild_id)).virtual_reaction_messages.delete(rm_uuid)
+        GuildData(str(payload.guild_id)).virtual_reaction_roles.delete(rm_uuid)
 
 
 async def setup(bot):

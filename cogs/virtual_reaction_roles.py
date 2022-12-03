@@ -8,6 +8,7 @@ from discord.ext import commands
 from discord.ext.commands import Context
 
 from util.data.guild_data import GuildData
+from util.decorators import delete_original
 
 start_time = time.time()
 log = logging.getLogger("smiles")
@@ -236,6 +237,7 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
     @virtual_reaction.command(name="deletemessage", aliases=["removemessage", "delmsg", "remmsg"])
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
+    @delete_original()
     async def virtual_delete_message(self, ctx: Context, msg_uuid: str, channel: TextChannel) -> None:
         """
         Remove a virtual role message.
@@ -252,10 +254,16 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
             message_id = combined_id.split("_")[0]
             msg_removing = await ctx.send("Removing message...")
 
-            reaction_message = await channel.fetch_message(message_id)
-
             GuildData(str(ctx.guild.id)).virtual_reaction_messages.delete(msg_uuid)
-            await reaction_message.delete()
+
+            # noinspection PyBroadException
+            try:
+                reaction_message = await channel.fetch_message(message_id)
+                if reaction_message:
+                    await reaction_message.delete()
+            except Exception:
+                await msg_removing.edit(content=f"**{msg_uuid}** message has already been deleted.", delete_after=7)
+                return
 
             await msg_removing.edit(content=f"Removed the **{msg_uuid}** message.",  delete_after=7)
 
