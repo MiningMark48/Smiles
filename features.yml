@@ -6,9 +6,9 @@ extensions:
     enabled: false
   - extension: utility
   - extension: virtual_profiles
-  - extension: virtual_roles
-  - extension: virtual_reaction_roles
-  - extension: virtual_reaction_handler
+  - extension: collectibles
+  - extension: collectible_reactions
+  - extension: collectibles_reaction_handler
 
 commands:
   - command: test

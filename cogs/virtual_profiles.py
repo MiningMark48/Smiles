@@ -16,7 +16,7 @@ log = logging.getLogger("smiles")
 
 
 # TODO:
-#   [ ] Add pagination for role viewing
+#   [ ] Add pagination for collectibles viewing
 #   [ ] Add way to view other users' profiles
 #   [ ] Leaderboard of most owned collectibles
 
@@ -51,23 +51,23 @@ class VirtualProfile(commands.Cog, name="Virtual Profile"):
 
         embed = VirtualHelpers.default_embed(title="Profile")
 
-        roles = GuildData(ctx.guild.id).virtual_role_collection.fetch_all_by_user_id(ctx.author.id)
-        # log.debug(roles)
+        collectibles = GuildData(ctx.guild.id).collectible_collection.fetch_all_by_user_id(ctx.author.id)
+        # log.debug(collectibles)
 
-        role_desc = "**Roles:**\n\n"
+        collect_desc = "**Collectibles:**\n\n"
 
-        if not roles:
-            role_desc = "You have no roles!"
+        if not collectibles:
+            collect_desc = "You have no collectibles!"
         else:
-            for _, _, role_uuid in roles:
-                role_display_name = GuildData(ctx.guild.id).virtual_roles.fetch_all_by_role_id(role_uuid)[0][2]
-                role_emoji = GuildData(ctx.guild.id).virtual_role_emojis.fetch_all_by_role_id(role_uuid)[0][2]
+            for _, _, collect_id in collectibles:
+                collect_display_name = GuildData(ctx.guild.id).collectibles.fetch_all_by_id(collect_id)[0][2]
+                collect_emoji = GuildData(ctx.guild.id).collectible_emojis.fetch_all_by_id(collect_id)[0][2]
 
-                # log.debug(f"{role_uuid}: {role_emoji} {role_display_name}")
+                # log.debug(f"{collect_id}: {collect_emoji} {collect_display_name}")
 
-                role_desc += f"{role_emoji} {role_display_name}\n"
+                collect_desc += f"{collect_emoji} {collect_display_name}\n"
 
-        embed.description = role_desc
+        embed.description = collect_desc
         await ctx.send(embed=embed)
 
 

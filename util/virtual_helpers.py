@@ -9,7 +9,7 @@ class VirtualHelpers:
         return uuid.lower().replace(" ", "_")
 
     @staticmethod
-    def default_embed(title="Virtual Roles", color=Color.blurple(), author: User = None):
+    def default_embed(title="Collectibles", color=Color.blurple(), author: User = None):
         embed = Embed(title=title, color=color)
 
         if author:

@@ -17,7 +17,7 @@ log = logging.getLogger("smiles")
 
 # TODO: Add cmd to edit message content
 
-class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
+class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
     def __init__(self, bot):
         self.bot = bot
 
@@ -37,12 +37,12 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
         embed.description = "Ok! No worries. :smile:"
         await ctx.send(embed=embed, delete_after=7)
 
-    @commands.group(name="virtualreaction", aliases=["virtreact", "vreaction", "vreact"])
+    @commands.group(name="collectreact", aliases=["creact", "creaction", "cr"])
     @commands.cooldown(1, 2)
     @commands.guild_only()
-    async def virtual_reaction(self, ctx):
+    async def collectibles_reaction(self, ctx):
         """
-        Manage virtual reaction roles for the server.
+        Manage collectible reactions for the server.
         """
 
         if ctx.invoked_subcommand is None:
@@ -53,24 +53,24 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
             new_ctx = await self.bot.get_context(msg, cls=type(ctx))
             await self.bot.invoke(new_ctx)
 
-    @virtual_reaction.command(name="addtomessage", aliases=["addtomsg", "addrole", "setrole", "add", "set"])
+    @collectibles_reaction.command(name="addtomessage", aliases=["addtomsg", "add", "set", "a"])
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
-    async def virtual_add_to_msg(self, ctx: Context, role_uuid: str, msg_uuid: str, channel: TextChannel) -> None:
+    async def collectibles_add_to_msg(self, ctx: Context, collect_id: str, msg_uuid: str, channel: TextChannel) -> None:
         """
-        Add a virtual role to a message.
+        Add a collectible reaction to a message.
 
         If the message does not exist yet, it will ask to create one.
 
-        Role_UUID: The unique identifier of the role you want to add to the message.
+        Collect_ID: The unique identifier of the collectible you want to add to the message.
         Msg_UUID: The unique identifier of the message you want to add to.
         Channel: The channel the message is located.
         """
 
-        role_uuid = VirtualHelpers.prepare_id(role_uuid)
+        collect_id = VirtualHelpers.prepare_id(collect_id)
         msg_uuid = VirtualHelpers.prepare_id(msg_uuid)
 
-        combined_id = GuildData(str(ctx.guild.id)).virtual_reaction_messages.fetch_by_msg_uuid(msg_uuid)
+        combined_id = GuildData(str(ctx.guild.id)).collectible_messages.fetch_by_msg_uuid(msg_uuid)
 
         embed = VirtualHelpers.default_embed()
 
@@ -82,7 +82,7 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
 
             reaction_message = await channel.fetch_message(message_id)
 
-            reaction_emoji = GuildData(str(ctx.guild.id)).virtual_role_emojis.fetch_by_role_id(role_uuid)
+            reaction_emoji = GuildData(str(ctx.guild.id)).collectible_emojis.fetch_by_id(collect_id)
             if not reaction_emoji:
                 await VirtualHelpers.edit_and_send_embed(msg_creating, embed,
                                                          "Error! Reaction emoji could not be retrieved.",
@@ -94,8 +94,9 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
             for reaction in reaction_message.reactions:
                 if reaction_emoji == reaction.emoji:
                     await VirtualHelpers.edit_and_send_embed(msg_creating, embed,
-                                                             "Error! Unable to add role as the emoji associated with "
-                                                             "that role is already on that message with a reaction.",
+                                                             "Error! Unable to add collectible as the emoji associated "
+                                                             "with that collectible is already on that message with a "
+                                                             "reaction.",
                                                              delete_after=7)
                     return
 
@@ -114,8 +115,8 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
             await reaction_message.add_reaction(reaction_emoji)
 
             combined_id = f"{reaction_message.id}_{channel.id}"
-            GuildData(str(ctx.guild.id)).virtual_reaction_messages.set(msg_uuid, combined_id)
-            GuildData(str(ctx.guild.id)).virtual_reaction_roles.insert(msg_uuid, role_uuid)
+            GuildData(str(ctx.guild.id)).collectible_messages.set(msg_uuid, combined_id)
+            GuildData(str(ctx.guild.id)).collectible_reactions.insert(msg_uuid, collect_id)
 
             msg_link = VirtualHelpers.gen_msg_link(reaction_message.id, channel.id, ctx.guild.id)
             await VirtualHelpers.edit_and_send_embed(msg_creating, embed,
@@ -156,7 +157,7 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
 
         reaction_message = await channel.send(message_content)
 
-        reaction_emoji = GuildData(str(ctx.guild.id)).virtual_role_emojis.fetch_by_role_id(role_uuid)
+        reaction_emoji = GuildData(str(ctx.guild.id)).collectible_emojis.fetch_by_id(collect_id)
         if not reaction_emoji:
             embed.description = "Error! Reaction emoji could not be retrieved."
             await ctx.send(embed=embed, delete_after=7)
@@ -165,31 +166,31 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
         await reaction_message.add_reaction(reaction_emoji)
 
         combined_id = f"{reaction_message.id}_{channel.id}"
-        GuildData(str(ctx.guild.id)).virtual_reaction_messages.set(msg_uuid, combined_id)
-        GuildData(str(ctx.guild.id)).virtual_reaction_roles.insert(msg_uuid, role_uuid)
+        GuildData(str(ctx.guild.id)).collectible_messages.set(msg_uuid, combined_id)
+        GuildData(str(ctx.guild.id)).collectible_reactions.insert(msg_uuid, collect_id)
 
         msg_link = VirtualHelpers.gen_msg_link(reaction_message.id, channel.id, ctx.guild.id)
         await VirtualHelpers.edit_and_send_embed(msg_creating, embed, f"[Message]({msg_link}) created.", delete_after=7)
 
         await ctx.channel.delete_messages(messages)
 
-    @virtual_reaction.command(name="removerolefrommsg", aliases=["deleterole", "removerole", "remrole", "delrole"])
+    @collectibles_reaction.command(name="removefrommsg", aliases=["deletecollect", "removecollect", "dc"])
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
-    async def virtual_remove_from_message(self, ctx: Context, role_uuid: str,
+    async def collectible_remove_from_msg(self, ctx: Context, collect_id: str,
                                           msg_uuid: str, channel: TextChannel) -> None:
         """
-        Remove a virtual role from a message.
+        Remove a collectible reaction from a message.
 
-        Role_UUID: The unique identifier of the role you want to remove from a message.
+        Collect_ID: The unique identifier of the collectible you want to remove from a message.
         Msg_UUID: The unique identifier of the message you want to remove from.
         Channel: The channel where the message is located.
         """
 
-        role_uuid = VirtualHelpers.prepare_id(role_uuid)
+        collect_id = VirtualHelpers.prepare_id(collect_id)
         msg_uuid = VirtualHelpers.prepare_id(msg_uuid)
 
-        combined_id = GuildData(str(ctx.guild.id)).virtual_reaction_messages.fetch_by_msg_uuid(msg_uuid)
+        combined_id = GuildData(str(ctx.guild.id)).collectible_messages.fetch_by_msg_uuid(msg_uuid)
 
         embed = VirtualHelpers.default_embed()
 
@@ -200,7 +201,7 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
 
             reaction_message = await channel.fetch_message(message_id)
 
-            reaction_emoji = GuildData(str(ctx.guild.id)).virtual_role_emojis.fetch_by_role_id(role_uuid)
+            reaction_emoji = GuildData(str(ctx.guild.id)).collectible_emojis.fetch_by_id(collect_id)
             if not reaction_emoji:
                 await VirtualHelpers.edit_and_send_embed(msg_removing, embed, "Error! Reaction emoji could not be "
                                                                               "retrieved.", delete_after=7)
@@ -208,10 +209,10 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
 
             await reaction_message.clear_reaction(reaction_emoji)
 
-            GuildData(str(ctx.guild.id)).virtual_reaction_roles.delete_where(msg_uuid, role_uuid)
+            GuildData(str(ctx.guild.id)).collectible_reactions.delete_where(msg_uuid, collect_id)
 
             await VirtualHelpers.edit_and_send_embed(
-                msg_removing, embed, f"Removed **{role_uuid}** role from **{msg_uuid}** message.", delete_after=7)
+                msg_removing, embed, f"Removed **{collect_id}** collectible from **{msg_uuid}** message.", delete_after=7)
 
             messages = []
             log.debug(len(reaction_message.reactions))
@@ -232,19 +233,19 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
 
                 deleting_msg = await ctx.send("Ok, I'm deleting it now!")
 
-                GuildData(str(ctx.guild.id)).virtual_reaction_messages.delete(msg_uuid)
+                GuildData(str(ctx.guild.id)).collectible_messages.delete(msg_uuid)
                 await reaction_message.delete()
 
                 await deleting_msg.edit(content="The message was deleted!", delete_after=7)
                 await ctx.channel.delete_messages(messages)
 
-    @virtual_reaction.command(name="deletemessage", aliases=["removemessage", "delmsg", "remmsg"])
+    @collectibles_reaction.command(name="deletemessage", aliases=["removemessage", "delmsg", "remmsg", "dm", "rm"])
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
     @delete_original()
-    async def virtual_delete_message(self, ctx: Context, msg_uuid: str, channel: TextChannel) -> None:
+    async def collectible_delete_message(self, ctx: Context, msg_uuid: str, channel: TextChannel) -> None:
         """
-        Remove a virtual role message.
+        Remove a collectible's reaction message.
 
         Msg_UUID: The unique identifier of the message you want to remove.
         Channel: The channel where the message is located.
@@ -252,7 +253,7 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
 
         msg_uuid = VirtualHelpers.prepare_id(msg_uuid)
 
-        combined_id = GuildData(str(ctx.guild.id)).virtual_reaction_messages.fetch_by_msg_uuid(msg_uuid)
+        combined_id = GuildData(str(ctx.guild.id)).collectible_messages.fetch_by_msg_uuid(msg_uuid)
 
         embed = VirtualHelpers.default_embed()
 
@@ -261,7 +262,7 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
             embed.description = "Removing message..."
             msg_removing = await ctx.send(embed=embed)
 
-            GuildData(str(ctx.guild.id)).virtual_reaction_messages.delete(msg_uuid)
+            GuildData(str(ctx.guild.id)).collectible_messages.delete(msg_uuid)
 
             # noinspection PyBroadException
             try:
@@ -276,26 +277,26 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
             await VirtualHelpers.edit_and_send_embed(msg_removing, embed, f"Removed the **{msg_uuid}** message.",
                                                      delete_after=7)
 
-    @virtual_reaction.command(name="listmessages", aliases=["messages", "list"])
+    @collectibles_reaction.command(name="listmessages", aliases=["messages", "list"])
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
-    async def virtual_list(self, ctx: Context) -> None:
+    async def collectibles_list(self, ctx: Context) -> None:
         """
-        List virtual reaction roles on the server
+        List collectible reactions on the server
         """
 
-        guild_virtual_msgs = GuildData(str(ctx.guild.id)).virtual_reaction_messages.fetch_all()
+        guild_collect_msgs = GuildData(str(ctx.guild.id)).collectible_messages.fetch_all()
 
         embed = VirtualHelpers.default_embed()
         embed.title += ": Reaction Message List"
 
-        if not len(guild_virtual_msgs) > 0:
+        if not len(guild_collect_msgs) > 0:
             embed.description = "No reaction messages available!"
             await ctx.send(embed=embed)
             return
 
         i = 0
-        for t in sorted(guild_virtual_msgs):
+        for t in sorted(guild_collect_msgs):
             ids = t[2].split("_")
 
             embed.add_field(name=t[1],
@@ -307,4 +308,4 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
 
 
 async def setup(bot):
-    await bot.add_cog(VirtualReactionRoles(bot))
+    await bot.add_cog(CollectibleReactions(bot))

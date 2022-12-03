@@ -18,16 +18,16 @@ start_time = time.time()
 log = logging.getLogger("smiles")
 
 
-class VirtualRoles(commands.Cog, name="Virtual Roles"):
+class Collectibles(commands.Cog, name="Collectibles"):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.group(name="virtualroles", aliases=["virtualrole", "virtrole", "vrole"])
+    @commands.group(name="collectibles", aliases=["collect", "col", "c"])
     @commands.cooldown(1, 2)
     @commands.guild_only()
-    async def virtual_roles(self, ctx):
+    async def collectibles(self, ctx):
         """
-        Manage virtual roles for the server.
+        Manage collectibles for the server.
         """
 
         if ctx.invoked_subcommand is None:
@@ -38,14 +38,14 @@ class VirtualRoles(commands.Cog, name="Virtual Roles"):
             new_ctx = await self.bot.get_context(msg, cls=type(ctx))
             await self.bot.invoke(new_ctx)
 
-    @virtual_roles.command(name="set", aliases=["add"])
+    @collectibles.command(name="set", aliases=["add", "s", "a"])
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
-    async def virtual_set(self, ctx: Context, role_id: str, emoji: str, *, display_name: str) -> None:
+    async def collectible_set(self, ctx: Context, collect_id: str, emoji: str, *, display_name: str) -> None:
         """
-        Set virtual role to the server
+        Set collectibles for the server
 
-        If a role's unique identifier already exists, this will overwrite it.
+        If a collectible's unique identifier already exists, this will overwrite it.
         """
 
         embed = VirtualHelpers.default_embed()
@@ -53,7 +53,7 @@ class VirtualRoles(commands.Cog, name="Virtual Roles"):
 
         msg = await ctx.send(embed=embed)
 
-        role_id = VirtualHelpers.prepare_id(role_id)
+        collect_id = VirtualHelpers.prepare_id(collect_id)
         display_name = display_name[:25]        # Limit display name to 25 chars
 
         check_emoji = discord.PartialEmoji.from_str(emoji)
@@ -61,78 +61,78 @@ class VirtualRoles(commands.Cog, name="Virtual Roles"):
         if check_emoji.is_custom_emoji():
             if await ctx.guild.fetch_emoji(check_emoji.id) is None:
                 await VirtualHelpers.edit_and_send_embed(
-                    msg, embed, "That emoji could not be found. Please try a different emoji.")
+                    msg, embed, "That emoji could not be found. Please try a different one.")
                 return
         elif not emo.is_emoji(emoji):
             await VirtualHelpers.edit_and_send_embed(
                 msg, embed, "That is not a valid emoji. Please try again!")
 
-        name = GuildData(str(ctx.guild.id)).virtual_roles.set(role_id, display_name)
-        e = GuildData(str(ctx.guild.id)).virtual_role_emojis.set(role_id, emoji)
+        name = GuildData(str(ctx.guild.id)).collectibles.set(collect_id, display_name)
+        e = GuildData(str(ctx.guild.id)).collectible_emojis.set(collect_id, emoji)
 
         await VirtualHelpers.edit_and_send_embed(
-            msg, embed, f"Set **{role_id}** as *{name}* with {e} as the emoji.")
+            msg, embed, f"Set **{collect_id}** as *{name}* with {e} as the emoji.")
 
-    @virtual_roles.command(name="delete", aliases=["remove"])
+    @collectibles.command(name="delete", aliases=["remove"])
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
-    async def virtual_delete(self, ctx: Context, role_id: str) -> None:
+    async def collectible_delete(self, ctx: Context, collect_id: str) -> None:
         """
-        Delete virtual role from the server
+        Delete a collectible from the server
         """
 
-        role_id = VirtualHelpers.prepare_id(role_id)
+        collect_id = VirtualHelpers.prepare_id(collect_id)
 
-        res_roles = GuildData(str(ctx.guild.id)).virtual_roles.delete(role_id)
-        res_emojis = GuildData(str(ctx.guild.id)).virtual_role_emojis.delete(role_id)
-        res_collect = GuildData(str(ctx.guild.id)).virtual_role_collection.delete_where_role(role_id)
-        res_react = GuildData(str(ctx.guild.id)).virtual_reaction_roles.delete_where_role(role_id)
+        res_collectibles = GuildData(str(ctx.guild.id)).collectibles.delete(collect_id)
+        res_emojis = GuildData(str(ctx.guild.id)).collectible_emojis.delete(collect_id)
+        res_collection = GuildData(str(ctx.guild.id)).collectible_collection.delete_where_collect_id(collect_id)
+        res_react = GuildData(str(ctx.guild.id)).collectible_reactions.delete_where_collect_id(collect_id)
 
-        final_result = res_roles and res_emojis and res_collect and res_react
+        final_result = res_collectibles and res_emojis and res_collection and res_react
 
         embed = VirtualHelpers.default_embed()
 
         if final_result:
-            embed.description = f"Removed **{role_id}** from the server."
+            embed.description = f"Removed **{collect_id}** from the server."
             await ctx.send(embed=embed)
         else:
             error_code = []
-            if not res_roles:
+            if not res_collectibles:
                 error_code.append("1001")
             if not res_emojis:
                 error_code.append("1002")
-            if not res_collect:
+            if not res_collection:
                 error_code.append("1003")
             if not res_react:
                 error_code.append("1004")
 
             joined = 'x'.join(error_code)
-            embed.description = f"Unable to remove **{role_id}** from the server.\n\n ```Error: {joined}```"
+            embed.description = f"Unable to remove **{collect_id}** from the server.\n\n ```Error: {joined}```"
             await ctx.send(embed=embed)
 
-    @virtual_roles.command(name="list", aliases=["roles"])
+    @collectibles.command(name="list", aliases=["collectibles", "show", "view"])
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
-    async def virtual_list(self, ctx: Context) -> None:
+    async def collectibles_list(self, ctx: Context) -> None:
         """
-        List virtual roles on the server
+        List collectibles on the server
         """
 
-        guild_virtual_roles = GuildData(str(ctx.guild.id)).virtual_roles.fetch_all()
-        guild_virtual_role_emojis = GuildData(str(ctx.guild.id)).virtual_role_emojis.fetch_all()
+        guild_collectibles = GuildData(str(ctx.guild.id)).collectibles.fetch_all()
+        guild_collectible_emojis = GuildData(str(ctx.guild.id)).collectible_emojis.fetch_all()
 
-        sorted_emojis = sorted(guild_virtual_role_emojis)
+        sorted_emojis = sorted(guild_collectible_emojis)
 
         embed = VirtualHelpers.default_embed()
 
-        if not len(guild_virtual_roles) > 0:
-            embed.description = "There are no available roles!"
+        if not len(guild_collectibles) > 0:
+            embed.description = "There are no available collectibles!"
             await ctx.send(embed=embed, delete_after=7)
             return
 
         embed.title += ": List"
         i = 0
-        for t in sorted(guild_virtual_roles):
+        for t in sorted(guild_collectibles):
             value = t[2]
             embed.add_field(
                 name=f"{sorted_emojis[i][2]} {escape_markdown(value[:100])}{'...' if len(value) > 100 else ''}",
@@ -145,4 +145,4 @@ class VirtualRoles(commands.Cog, name="Virtual Roles"):
 
 
 async def setup(bot):
-    await bot.add_cog(VirtualRoles(bot))
+    await bot.add_cog(Collectibles(bot))

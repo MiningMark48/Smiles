@@ -2,6 +2,8 @@
 **Commands Available:** 12
 | Name    | Description | Category | Aliases | Subcommands |
 |---------|-------------|----------|---------|-------------|
+| collectibles | Manage collectibles for the server. | Collectibles | collect, col, c | delete, list, set |
+| collectreact | Manage collectible reactions for the server. | Collectible Reactions | creact, creaction, cr | addtomessage, deletemessage, listmessages, removefrommsg |
 | commandsearch | Search for a command | Utility | cmdsearch, search | -- |
 | emojilist | Get a list of all emojis for the server | Utility | emojis | -- |
 | help | Shows this message | None | -- | -- |
@@ -12,8 +14,6 @@
 | sync | Sync application commands  sync        : Global sync sync ~      : Current guild sync sync *      : Copies all global app commands to current guild and syncs sync ^      : Clears all commands from the current guild target and syncs (removes guild commands) sync 1 2    : Syncs guilds with ID 1 and 2 | Owner | -- | -- |
 | uptime | See how long the bot has been running | Utility | -- | -- |
 | virtualprofile | Manage and view your virtual profile! | Virtual Profile | vprofile, vp, profile | view |
-| virtualreaction | Manage virtual reaction roles for the server. | Virtual Reaction Roles | virtreact, vreaction, vreact | addtomessage, deletemessage, listmessages, removerolefrommsg |
-| virtualroles | Manage virtual roles for the server. | Virtual Roles | virtualrole, virtrole, vrole | delete, list, set |
 
 *Plus 0 hidden.*
 
