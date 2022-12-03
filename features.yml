@@ -3,6 +3,7 @@
 extensions:
   - extension: owner
   - extension: test
+    enabled: false
   - extension: utility
   - extension: virtual_profiles
   - extension: virtual_roles

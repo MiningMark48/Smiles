@@ -3,15 +3,14 @@ import logging
 import time
 
 import discord
+# from emoji import EMOJI_DATA
+import emoji as emo
 from discord.ext import commands
 from discord.ext.commands import Context
 from discord.utils import escape_markdown
 
 from util.data.guild_data import GuildData
 from util.virtual_helpers import VirtualHelpers
-
-# from emoji import EMOJI_DATA
-import emoji as emo
 
 # from discord.types.emoji import Emoji
 
@@ -49,10 +48,10 @@ class VirtualRoles(commands.Cog, name="Virtual Roles"):
         If a role's unique identifier already exists, this will overwrite it.
         """
 
-        # def clean_emoji(e: str):
-        #     e.replace("<", "").replace(">", "").replace
+        embed = VirtualHelpers.default_embed()
+        embed.description = "Setting..."
 
-        msg = await ctx.send("Setting...")
+        msg = await ctx.send(embed=embed)
 
         role_id = VirtualHelpers.prepare_id(role_id)
         display_name = display_name[:25]        # Limit display name to 25 chars
@@ -61,16 +60,18 @@ class VirtualRoles(commands.Cog, name="Virtual Roles"):
 
         if check_emoji.is_custom_emoji():
             if await ctx.guild.fetch_emoji(check_emoji.id) is None:
-                await msg.edit(content="That emoji could not be found. Please try a different emoji.")
+                await VirtualHelpers.edit_and_send_embed(
+                    msg, embed, "That emoji could not be found. Please try a different emoji.")
                 return
         elif not emo.is_emoji(emoji):
-            await msg.edit(content="That is not a valid emoji. Please try again!")
-            return
+            await VirtualHelpers.edit_and_send_embed(
+                msg, embed, "That is not a valid emoji. Please try again!")
 
         name = GuildData(str(ctx.guild.id)).virtual_roles.set(role_id, display_name)
         e = GuildData(str(ctx.guild.id)).virtual_role_emojis.set(role_id, emoji)
 
-        await msg.edit(content=f"Set **{role_id}** as *{name}* with {e} as the emoji.")
+        await VirtualHelpers.edit_and_send_embed(
+            msg, embed, f"Set **{role_id}** as *{name}* with {e} as the emoji.")
 
     @virtual_roles.command(name="delete", aliases=["remove"])
     @commands.guild_only()
@@ -87,22 +88,27 @@ class VirtualRoles(commands.Cog, name="Virtual Roles"):
         res_collect = GuildData(str(ctx.guild.id)).virtual_role_collection.delete_where_role(role_id)
         res_react = GuildData(str(ctx.guild.id)).virtual_reaction_roles.delete_where_role(role_id)
 
-        final_result = res_roles and res_emojis and res_collect
+        final_result = res_roles and res_emojis and res_collect and res_react
+
+        embed = VirtualHelpers.default_embed()
 
         if final_result:
-            await ctx.send(f"Removed **{role_id}** from the server.")
+            embed.description = f"Removed **{role_id}** from the server."
+            await ctx.send(embed=embed)
         else:
-            errors = []
+            error_code = []
             if not res_roles:
-                errors.append("Virtual Roles")
+                error_code.append("1001")
             if not res_emojis:
-                errors.append("Virtual Role Emojis")
+                error_code.append("1002")
             if not res_collect:
-                errors.append("Virtual Role Collection")
+                error_code.append("1003")
             if not res_react:
-                errors.append("Virtual Role Reactions")
+                error_code.append("1004")
 
-            await ctx.send(f"Unable to remove **{role_id}** from the server.\n`{', '.join(errors)}`")
+            joined = 'x'.join(error_code)
+            embed.description = f"Unable to remove **{role_id}** from the server.\n\n ```Error: {joined}```"
+            await ctx.send(embed=embed)
 
     @virtual_roles.command(name="list", aliases=["roles"])
     @commands.guild_only()
@@ -117,23 +123,25 @@ class VirtualRoles(commands.Cog, name="Virtual Roles"):
 
         sorted_emojis = sorted(guild_virtual_role_emojis)
 
+        embed = VirtualHelpers.default_embed()
+
         if not len(guild_virtual_roles) > 0:
-            await ctx.send("No roles available!")
+            embed.description = "There are no available roles!"
+            await ctx.send(embed=embed, delete_after=7)
             return
 
-        tags = f"{ctx.guild.name} Virtual Roles\n\n"
+        embed.title += ": List"
         i = 0
         for t in sorted(guild_virtual_roles):
             value = t[2]
-            value = value.replace("\n", "")
-            tags += f"[{t[1]}] {sorted_emojis[i][2]} " \
-                    f"{escape_markdown(value[:100])}{'...' if len(value) > 100 else ''}\n"
+            embed.add_field(
+                name=f"{sorted_emojis[i][2]} {escape_markdown(value[:100])}{'...' if len(value) > 100 else ''}",
+                value=t[1],
+                inline=True
+            )
             i += 1
 
-        parts = [(tags[i:i + 750]) for i in range(0, len(tags), 750)]
-        for part in parts:
-            part = part.replace("```", "")
-            await ctx.send(f"```{part}```")
+        await ctx.send(embed=embed)
 
 
 async def setup(bot):

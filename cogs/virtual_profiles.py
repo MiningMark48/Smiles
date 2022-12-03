@@ -9,6 +9,7 @@ from discord.ext.commands import Context
 
 from util.data.guild_data import GuildData
 from util.decorators import delete_original
+from util.virtual_helpers import VirtualHelpers
 
 start_time = time.time()
 log = logging.getLogger("smiles")
@@ -42,7 +43,7 @@ class VirtualProfile(commands.Cog, name="Virtual Profile"):
         View your virtual profile
         """
 
-        embed = discord.Embed(title="Profile", color=Color.og_blurple())
+        embed = VirtualHelpers.default_embed(title="Profile")
 
         roles = GuildData(ctx.guild.id).virtual_role_collection.fetch_all_by_user_id(ctx.author.id)
         # log.debug(roles)

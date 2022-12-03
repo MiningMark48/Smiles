@@ -1,9 +1,8 @@
 # Commands
-**Commands Available:** 13
+**Commands Available:** 12
 | Name    | Description | Category | Aliases | Subcommands |
 |---------|-------------|----------|---------|-------------|
 | commandsearch | Search for a command | Utility | cmdsearch, search | -- |
-| components | None | Test | -- | -- |
 | emojilist | Get a list of all emojis for the server | Utility | emojis | -- |
 | help | Shows this message | None | -- | -- |
 | ping | Latency of the bot | Utility | -- | -- |
