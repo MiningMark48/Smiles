@@ -15,6 +15,12 @@ start_time = time.time()
 log = logging.getLogger("smiles")
 
 
+# TODO:
+#   [ ] Add pagination for role viewing
+#   [ ] Add way to view other users' profiles
+#   [ ] Leaderboard of most owned collectibles
+
+
 class VirtualProfile(commands.Cog, name="Virtual Profile"):
     def __init__(self, bot):
         self.bot = bot

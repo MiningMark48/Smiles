@@ -10,6 +10,8 @@ from util.data.guild_data import GuildData
 start_time = time.time()
 log = logging.getLogger("smiles")
 
+# TODO: Add embeds for DMs
+
 
 class VirtualReactionRoleHandler(commands.Cog, name="Virtual Reaction Role Handler"):
     def __init__(self, bot):

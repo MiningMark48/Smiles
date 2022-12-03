@@ -15,6 +15,8 @@ start_time = time.time()
 log = logging.getLogger("smiles")
 
 
+# TODO: Add cmd to edit message content
+
 class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
     def __init__(self, bot):
         self.bot = bot
