@@ -11,10 +11,6 @@ start_time = time.time()
 log = logging.getLogger("smiles")
 
 
-def prepare_id(uuid: str):  # TODO: Make common method
-    return uuid.lower().replace(" ", "_")
-
-
 class VirtualReactionRoleHandler(commands.Cog, name="Virtual Reaction Role Handler"):
     def __init__(self, bot):
         self.bot = bot

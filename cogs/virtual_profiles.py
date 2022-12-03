@@ -1,10 +1,9 @@
-import asyncio
 import copy
 import logging
 import time
 
 import discord
-from discord import Message, TextChannel, Color
+from discord import Color
 from discord.ext import commands
 from discord.ext.commands import Context
 
@@ -13,10 +12,6 @@ from util.decorators import delete_original
 
 start_time = time.time()
 log = logging.getLogger("smiles")
-
-
-def prepare_id(uuid: str):  # TODO: Make common method
-    return uuid.lower().replace(" ", "_")
 
 
 class VirtualProfile(commands.Cog, name="Virtual Profile"):

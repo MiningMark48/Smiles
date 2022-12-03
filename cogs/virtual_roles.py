@@ -3,21 +3,17 @@ import logging
 import time
 
 import discord
-from discord import Emoji
 from discord.ext import commands
 from discord.ext.commands import Context
-# from discord.types.emoji import Emoji
-
 from discord.utils import escape_markdown
 
 from util.data.guild_data import GuildData
+from util.virtual_helpers import VirtualHelpers
+
+# from discord.types.emoji import Emoji
 
 start_time = time.time()
 log = logging.getLogger("smiles")
-
-
-def prepare_role_id(role_id: str):
-    return role_id.lower().replace(" ", "_")
 
 
 class VirtualRoles(commands.Cog, name="Virtual Roles"):
@@ -55,7 +51,7 @@ class VirtualRoles(commands.Cog, name="Virtual Roles"):
 
         msg = await ctx.send("Setting...")
 
-        role_id = prepare_role_id(role_id)
+        role_id = VirtualHelpers.prepare_id(role_id)
         display_name = display_name[:25]        # Limit display name to 25 chars
 
         check_emoji = discord.PartialEmoji.from_str(emoji)
@@ -79,7 +75,7 @@ class VirtualRoles(commands.Cog, name="Virtual Roles"):
         Delete virtual role from the server
         """
 
-        role_id = prepare_role_id(role_id)
+        role_id = VirtualHelpers.prepare_id(role_id)
 
         result = GuildData(str(ctx.guild.id)).virtual_roles.delete(role_id)
         result2 = GuildData(str(ctx.guild.id)).virtual_role_emojis.delete(role_id)
@@ -113,7 +109,8 @@ class VirtualRoles(commands.Cog, name="Virtual Roles"):
         for t in sorted(guild_virtual_roles):
             value = t[2]
             value = value.replace("\n", "")
-            tags += f"[{t[1]}] {sorted_emojis[i][2]} {escape_markdown(value[:100])}{'...' if len(value) > 100 else ''}\n"
+            tags += f"[{t[1]}] {sorted_emojis[i][2]} " \
+                    f"{escape_markdown(value[:100])}{'...' if len(value) > 100 else ''}\n"
             i += 1
 
         parts = [(tags[i:i + 750]) for i in range(0, len(tags), 750)]

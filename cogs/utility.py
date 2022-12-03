@@ -109,8 +109,8 @@ class Utility(commands.Cog, name="Utility"):
     @commands.guild_only()
     async def emojilist(self, ctx):
         """Get a list of all emojis for the server"""
-        list = ' '.join(str(x) for x in ctx.guild.emojis)
-        await ctx.send(f'**Emojis: **{list}')
+        emoji_list = ' '.join(str(x) for x in ctx.guild.emojis)
+        await ctx.send(f'**Emojis: **{emoji_list}')
 
     @commands.hybrid_command()
     @delete_original()

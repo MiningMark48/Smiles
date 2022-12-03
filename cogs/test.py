@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-from discord.ui import view
 
 
 class TestView(discord.ui.View):

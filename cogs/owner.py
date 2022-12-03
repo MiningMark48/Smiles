@@ -1,9 +1,8 @@
 import logging
 import time
-from typing import Optional, Literal, List
+from typing import Optional, Literal
 
 import discord
-from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Context, Greedy
 

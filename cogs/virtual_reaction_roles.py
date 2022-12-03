@@ -9,13 +9,10 @@ from discord.ext.commands import Context
 
 from util.data.guild_data import GuildData
 from util.decorators import delete_original
+from util.virtual_helpers import VirtualHelpers
 
 start_time = time.time()
 log = logging.getLogger("smiles")
-
-
-def prepare_id(uuid: str):  # TODO: Make common method
-    return uuid.lower().replace(" ", "_")
 
 
 class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
@@ -66,8 +63,8 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
         Channel: The channel the message is located.
         """
 
-        role_uuid = prepare_id(role_uuid)
-        msg_uuid = prepare_id(msg_uuid)
+        role_uuid = VirtualHelpers.prepare_id(role_uuid)
+        msg_uuid = VirtualHelpers.prepare_id(msg_uuid)
 
         combined_id = GuildData(str(ctx.guild.id)).virtual_reaction_messages.fetch_by_msg_uuid(msg_uuid)
 
@@ -177,7 +174,8 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
     @virtual_reaction.command(name="removerolefrommsg", aliases=["deleterole", "removerole", "remrole", "delrole"])
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
-    async def virtual_remove_from_message(self, ctx: Context, role_uuid: str, msg_uuid: str, channel: TextChannel) -> None:
+    async def virtual_remove_from_message(self, ctx: Context, role_uuid: str,
+                                          msg_uuid: str, channel: TextChannel) -> None:
         """
         Remove a virtual role from a message.
 
@@ -186,8 +184,8 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
         Channel: The channel where the message is located.
         """
 
-        role_uuid = prepare_id(role_uuid)
-        msg_uuid = prepare_id(msg_uuid)
+        role_uuid = VirtualHelpers.prepare_id(role_uuid)
+        msg_uuid = VirtualHelpers.prepare_id(msg_uuid)
 
         combined_id = GuildData(str(ctx.guild.id)).virtual_reaction_messages.fetch_by_msg_uuid(msg_uuid)
 
@@ -246,7 +244,7 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
         Channel: The channel where the message is located.
         """
 
-        msg_uuid = prepare_id(msg_uuid)
+        msg_uuid = VirtualHelpers.prepare_id(msg_uuid)
 
         combined_id = GuildData(str(ctx.guild.id)).virtual_reaction_messages.fetch_by_msg_uuid(msg_uuid)
 
