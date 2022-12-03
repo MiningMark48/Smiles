@@ -295,7 +295,6 @@ class VirtualReactionRoles(commands.Cog, name="Virtual Reaction Roles"):
             await ctx.send(f"{part}")
 
     # TODO: Make messages use embeds
-    # TODO: Delete all links to a role when a role is delete from the virtual roles list
 
 
 async def setup(bot):

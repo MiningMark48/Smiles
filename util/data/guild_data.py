@@ -312,6 +312,16 @@ class GuildData:
             else:
                 return False
 
+        def delete_where_role(self, r_id: str) -> Any:
+            val = ValueHelper.list_tuple_value(
+                list(self.conn.execute(self.table.select().where(self.table.columns.role_uuid == r_id))), 2)
+            if val is not None:
+                rep = self.table.delete().where(self.table.columns.role_uuid == r_id)
+                self.conn.execute(rep)
+                return True
+            else:
+                return False
+
     class VirtualRoleCollection(TableHelper):
         def __init__(self, meta, conn):
             self.conn = conn
@@ -359,6 +369,16 @@ class GuildData:
             if val is not None:
                 rep = self.table.delete().where(
                     (self.table.columns.user_id == user_id) & (self.table.columns.role_uuid == r_id))
+                self.conn.execute(rep)
+                return True
+            else:
+                return False
+
+        def delete_where_role(self, r_id: str) -> Any:
+            val = ValueHelper.list_tuple_value(
+                list(self.conn.execute(self.table.select().where(self.table.columns.role_uuid == r_id))), 2)
+            if val is not None:
+                rep = self.table.delete().where(self.table.columns.role_uuid == r_id)
                 self.conn.execute(rep)
                 return True
             else:

@@ -82,15 +82,27 @@ class VirtualRoles(commands.Cog, name="Virtual Roles"):
 
         role_id = VirtualHelpers.prepare_id(role_id)
 
-        result = GuildData(str(ctx.guild.id)).virtual_roles.delete(role_id)
-        result2 = GuildData(str(ctx.guild.id)).virtual_role_emojis.delete(role_id)
+        res_roles = GuildData(str(ctx.guild.id)).virtual_roles.delete(role_id)
+        res_emojis = GuildData(str(ctx.guild.id)).virtual_role_emojis.delete(role_id)
+        res_collect = GuildData(str(ctx.guild.id)).virtual_role_collection.delete_where_role(role_id)
+        res_react = GuildData(str(ctx.guild.id)).virtual_reaction_roles.delete_where_role(role_id)
 
-        final_result = result and result2
+        final_result = res_roles and res_emojis and res_collect
 
         if final_result:
             await ctx.send(f"Removed **{role_id}** from the server.")
         else:
-            await ctx.send(f"Unable to remove **{role_id}** from the server.")
+            errors = []
+            if not res_roles:
+                errors.append("Virtual Roles")
+            if not res_emojis:
+                errors.append("Virtual Role Emojis")
+            if not res_collect:
+                errors.append("Virtual Role Collection")
+            if not res_react:
+                errors.append("Virtual Role Reactions")
+
+            await ctx.send(f"Unable to remove **{role_id}** from the server.\n`{', '.join(errors)}`")
 
     @virtual_roles.command(name="list", aliases=["roles"])
     @commands.guild_only()
