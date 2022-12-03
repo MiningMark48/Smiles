@@ -10,6 +10,9 @@ from discord.utils import escape_markdown
 from util.data.guild_data import GuildData
 from util.virtual_helpers import VirtualHelpers
 
+# from emoji import EMOJI_DATA
+import emoji as emo
+
 # from discord.types.emoji import Emoji
 
 start_time = time.time()
@@ -55,12 +58,14 @@ class VirtualRoles(commands.Cog, name="Virtual Roles"):
         display_name = display_name[:25]        # Limit display name to 25 chars
 
         check_emoji = discord.PartialEmoji.from_str(emoji)
+
         if check_emoji.is_custom_emoji():
             if await ctx.guild.fetch_emoji(check_emoji.id) is None:
                 await msg.edit(content="That emoji could not be found. Please try a different emoji.")
                 return
-
-        # TODO: Make sure emoji *is* an emoji and not just text
+        elif not emo.is_emoji(emoji):
+            await msg.edit(content="That is not a valid emoji. Please try again!")
+            return
 
         name = GuildData(str(ctx.guild.id)).virtual_roles.set(role_id, display_name)
         e = GuildData(str(ctx.guild.id)).virtual_role_emojis.set(role_id, emoji)
