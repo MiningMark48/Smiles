@@ -1,9 +1,9 @@
 import copy
 import logging
 import time
+from typing import Optional
 
-import discord
-from discord import Color
+from discord import User, Color, Member
 from discord.ext import commands
 from discord.ext.commands import Context
 
@@ -17,20 +17,20 @@ log = logging.getLogger("smiles")
 
 # TODO:
 #   [ ] Add pagination for collectibles viewing
-#   [ ] Add way to view other users' profiles
-#   [ ] Leaderboard of most owned collectibles
+#   [X] Add way to view other users' profiles
+#   [ ] Leaderboard of most owned collectibles?
 
 
 class VirtualProfile(commands.Cog, name="Virtual Profile"):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.group(name="virtualprofile", aliases=["vprofile", "vp", "profile"])
+    @commands.group(name="profile", aliases=["p"])
     @commands.cooldown(1, 2)
     @commands.guild_only()
-    async def virtual_profile(self, ctx):
+    async def profile(self, ctx):
         """
-        Manage and view your virtual profile!
+        Manage and view your profile!
         """
 
         if ctx.invoked_subcommand is None:
@@ -41,33 +41,41 @@ class VirtualProfile(commands.Cog, name="Virtual Profile"):
             new_ctx = await self.bot.get_context(msg, cls=type(ctx))
             await self.bot.invoke(new_ctx)
 
-    @virtual_profile.command(name="view", aliases=["see", "v"])
+    @profile.command(name="view", aliases=["see", "v"])
     @commands.guild_only()
     @delete_original()
-    async def virtual_view(self, ctx: Context) -> None:
+    async def profile_view(self, ctx: Context, user: Optional[Member] = None) -> None:
         """
-        View your virtual profile
+        View your profile to see your collectibles and other information!
         """
 
-        embed = VirtualHelpers.default_embed(title="Profile")
+        profile_user = user if user else ctx.author
 
-        collectibles = GuildData(ctx.guild.id).collectible_collection.fetch_all_by_user_id(ctx.author.id)
-        # log.debug(collectibles)
+        color = profile_user.color if profile_user.color else Color.blurple()
+        embed = VirtualHelpers.default_embed(title=f"{profile_user.display_name}'s Profile", color=color)
+        if profile_user.avatar and profile_user.avatar.url:
+            embed.set_thumbnail(url=profile_user.avatar.url)
 
-        collect_desc = "**Collectibles:**\n\n"
+        embed.set_footer(text="Sent")
+        embed.timestamp = ctx.message.created_at
+
+        embed.add_field(name="Joined Discord", value=profile_user.created_at.date(), inline=True)
+        embed.add_field(name="Joined Server", value=profile_user.joined_at.date(), inline=True)
+
+        collectibles = GuildData(ctx.guild.id).collectible_collection.fetch_all_by_user_id(profile_user.id)
+
+        collect_list = []
 
         if not collectibles:
-            collect_desc = "You have no collectibles!"
+            collect_list = "You have no collectibles!"
         else:
             for _, _, collect_id in collectibles:
                 collect_display_name = GuildData(ctx.guild.id).collectibles.fetch_all_by_id(collect_id)[0][2]
                 collect_emoji = GuildData(ctx.guild.id).collectible_emojis.fetch_all_by_id(collect_id)[0][2]
 
-                # log.debug(f"{collect_id}: {collect_emoji} {collect_display_name}")
+                collect_list.append(f"{collect_emoji} {collect_display_name}")
 
-                collect_desc += f"{collect_emoji} {collect_display_name}\n"
-
-        embed.description = collect_desc
+        embed.add_field(name="Collectibles", value=' • '.join(collect_list), inline=False)
         await ctx.send(embed=embed)
 
 

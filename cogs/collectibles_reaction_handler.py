@@ -10,7 +10,9 @@ from util.data.guild_data import GuildData
 start_time = time.time()
 log = logging.getLogger("smiles")
 
-# TODO: Add embeds for DMs
+# TODO:
+#   [ ] Add embeds for DMs
+#   [ ] Move to "background" cog directory
 
 
 class CollectiblesReactionHandler(commands.Cog, name="Collectibles Reaction Handler"):
