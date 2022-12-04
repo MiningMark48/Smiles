@@ -19,6 +19,8 @@ from util.logging import ConsoleColorFormatter, CustomLogLevels
 log = logging.getLogger("smiles")
 start_time = time.time()
 
+# TODO: Global exception handling (make sure errors are spit out to the console)
+
 
 def get_log_level(name: str):
     valid = ["debug", "info", "warning", "error", "critical"]
