@@ -1,14 +1,16 @@
 # This file is for enabling/disabling bot features
 
 extensions:
+  - extension: collectibles
+  - extension: collectible_reactions
+  - extension: collectibles_reaction_handler
+  - extension: errors
   - extension: owner
   - extension: test
     enabled: false
   - extension: utility
   - extension: virtual_profiles
-  - extension: collectibles
-  - extension: collectible_reactions
-  - extension: collectibles_reaction_handler
+
 
 commands:
   - command: test
