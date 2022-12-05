@@ -67,7 +67,7 @@ class VirtualProfile(commands.Cog, name="Virtual Profile"):
         collect_list = []
 
         if not collectibles:
-            collect_list = "You have no collectibles!"
+            collect_list.append("You have no collectibles!")
         else:
             for _, _, collect_id in collectibles:
                 collect_display_name = GuildData(ctx.guild.id).collectibles.fetch_all_by_id(collect_id)[0][2]
