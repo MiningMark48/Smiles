@@ -3,13 +3,13 @@ import logging
 import time
 from typing import Optional
 
-from discord import User, Color, Member
+from discord import Color, Member
 from discord.ext import commands
 from discord.ext.commands import Context
 
+from util.collectible_helpers import CollectibleHelpers
 from util.data.guild_data import GuildData
 from util.decorators import delete_original
-from util.virtual_helpers import VirtualHelpers
 
 start_time = time.time()
 log = logging.getLogger("smiles")
@@ -52,7 +52,7 @@ class VirtualProfile(commands.Cog, name="Virtual Profile"):
         profile_user = user if user else ctx.author
 
         color = profile_user.color if profile_user.color else Color.blurple()
-        embed = VirtualHelpers.default_embed(title=f"{profile_user.display_name}'s Profile", color=color)
+        embed = CollectibleHelpers.Embeds.default_embed(title=f"{profile_user.display_name}'s Profile", color=color)
         if profile_user.avatar and profile_user.avatar.url:
             embed.set_thumbnail(url=profile_user.avatar.url)
 

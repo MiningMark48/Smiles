@@ -12,7 +12,7 @@ from discord.utils import escape_markdown
 
 from util.data.guild_data import GuildData
 from util.decorators import delete_original
-from util.virtual_helpers import VirtualHelpers
+from util.collectible_helpers import CollectibleHelpers
 
 # from discord.types.emoji import Emoji
 
@@ -51,29 +51,29 @@ class Collectibles(commands.Cog, name="Collectibles"):
         If a collectible's unique identifier already exists, this will overwrite it.
         """
 
-        embed = VirtualHelpers.default_embed()
+        embed = CollectibleHelpers.Embeds.default_embed()
         embed.description = "Setting..."
 
         msg = await ctx.send(embed=embed)
 
-        collect_id = VirtualHelpers.prepare_id(collect_id)
+        collect_id = CollectibleHelpers.prepare_id(collect_id)
         display_name = display_name[:25]        # Limit display name to 25 chars
 
         check_emoji = discord.PartialEmoji.from_str(emoji)
 
         if check_emoji.is_custom_emoji():
             if await ctx.guild.fetch_emoji(check_emoji.id) is None:
-                await VirtualHelpers.edit_and_send_embed(
+                await CollectibleHelpers.Embeds.edit_and_send_embed(
                     msg, embed, "That emoji could not be found. Please try a different one.")
                 return
         elif not emo.is_emoji(emoji):
-            await VirtualHelpers.edit_and_send_embed(
+            await CollectibleHelpers.Embeds.edit_and_send_embed(
                 msg, embed, "That is not a valid emoji. Please try again!")
 
         name = GuildData(str(ctx.guild.id)).collectibles.set(collect_id, display_name)
         e = GuildData(str(ctx.guild.id)).collectible_emojis.set(collect_id, emoji)
 
-        await VirtualHelpers.edit_and_send_embed(
+        await CollectibleHelpers.Embeds.edit_and_send_embed(
             msg, embed, f"Set **{collect_id}** as *{name}* with {e} as the emoji.")
 
     @collectibles.command(name="delete", aliases=["remove"])
@@ -85,7 +85,7 @@ class Collectibles(commands.Cog, name="Collectibles"):
         Delete a collectible from the server
         """
 
-        collect_id = VirtualHelpers.prepare_id(collect_id)
+        collect_id = CollectibleHelpers.prepare_id(collect_id)
 
         res_collectibles = GuildData(str(ctx.guild.id)).collectibles.delete(collect_id)
         res_emojis = GuildData(str(ctx.guild.id)).collectible_emojis.delete(collect_id)
@@ -94,7 +94,7 @@ class Collectibles(commands.Cog, name="Collectibles"):
 
         final_result = res_collectibles and res_emojis and res_collection and res_react
 
-        embed = VirtualHelpers.default_embed()
+        embed = CollectibleHelpers.Embeds.default_embed()
 
         if final_result:
             embed.description = f"Removed **{collect_id}** from the server."
@@ -128,7 +128,7 @@ class Collectibles(commands.Cog, name="Collectibles"):
 
         sorted_emojis = sorted(guild_collectible_emojis)
 
-        embed = VirtualHelpers.default_embed()
+        embed = CollectibleHelpers.Embeds.default_embed()
 
         if not len(guild_collectibles) > 0:
             embed.description = "There are no available collectibles!"

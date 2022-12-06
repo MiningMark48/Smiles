@@ -9,7 +9,7 @@ from discord.ext.commands import Context
 
 from util.data.guild_data import GuildData
 from util.decorators import delete_original
-from util.virtual_helpers import VirtualHelpers
+from util.collectible_helpers import CollectibleHelpers
 
 start_time = time.time()
 log = logging.getLogger("smiles")
@@ -33,7 +33,7 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
 
     @staticmethod
     async def send_cancel_message(ctx: Context):
-        embed = VirtualHelpers.default_embed()
+        embed = CollectibleHelpers.Embeds.default_embed()
         embed.description = "Ok! No worries. :smile:"
         await ctx.send(embed=embed, delete_after=7)
 
@@ -67,12 +67,12 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
         Channel: The channel the message is located.
         """
 
-        collect_id = VirtualHelpers.prepare_id(collect_id)
-        msg_uuid = VirtualHelpers.prepare_id(msg_uuid)
+        collect_id = CollectibleHelpers.prepare_id(collect_id)
+        msg_uuid = CollectibleHelpers.prepare_id(msg_uuid)
 
         combined_id = GuildData(str(ctx.guild.id)).collectible_messages.fetch_by_msg_uuid(msg_uuid)
 
-        embed = VirtualHelpers.default_embed()
+        embed = CollectibleHelpers.Embeds.default_embed()
 
         if combined_id:
             message_id = combined_id.split("_")[0]
@@ -84,32 +84,32 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
 
             reaction_emoji = GuildData(str(ctx.guild.id)).collectible_emojis.fetch_by_id(collect_id)
             if not reaction_emoji:
-                await VirtualHelpers.edit_and_send_embed(msg_creating, embed,
-                                                         "Error! Reaction emoji could not be retrieved.",
-                                                         delete_after=7)
+                await CollectibleHelpers.Embeds.edit_and_send_embed(msg_creating, embed,
+                                                                    "Error! Reaction emoji could not be retrieved.",
+                                                                    delete_after=7)
                 return
 
             # log.debug(reaction_message.reactions)
 
             for reaction in reaction_message.reactions:
                 if reaction_emoji == reaction.emoji:
-                    await VirtualHelpers.edit_and_send_embed(msg_creating, embed,
-                                                             "Error! Unable to add collectible as the emoji associated "
-                                                             "with that collectible is already on that message with a "
-                                                             "reaction.",
-                                                             delete_after=7)
+                    await CollectibleHelpers.Embeds.edit_and_send_embed(msg_creating, embed,
+                                                                        "Error! Unable to add collectible as the "
+                                                                        "emoji associated with that collectible is "
+                                                                        "already on that message with a reaction.",
+                                                                        delete_after=7)
                     return
 
             if reaction_emoji in reaction_message.reactions:
-                await VirtualHelpers.edit_and_send_embed(msg_creating, embed,
-                                                         "Error! Message already has that emoji as a reaction.",
-                                                         delete_after=7)
+                await CollectibleHelpers.Embeds.edit_and_send_embed(msg_creating, embed,
+                                                                    "Error! Message already has that emoji as a "
+                                                                    "reaction.", delete_after=7)
                 return
 
             if reaction_message.reactions == 20:
-                await VirtualHelpers.edit_and_send_embed(msg_creating, embed,
-                                                         "Error! Message has max amount of reactions!",
-                                                         delete_after=7)
+                await CollectibleHelpers.Embeds.edit_and_send_embed(msg_creating, embed,
+                                                                    "Error! Message has max amount of reactions!",
+                                                                    delete_after=7)
                 return
 
             await reaction_message.add_reaction(reaction_emoji)
@@ -118,10 +118,10 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
             GuildData(str(ctx.guild.id)).collectible_messages.set(msg_uuid, combined_id)
             GuildData(str(ctx.guild.id)).collectible_reactions.insert(msg_uuid, collect_id)
 
-            msg_link = VirtualHelpers.gen_msg_link(reaction_message.id, channel.id, ctx.guild.id)
-            await VirtualHelpers.edit_and_send_embed(msg_creating, embed,
-                                                     f"Reactions were added to your [message]({msg_link}).",
-                                                     delete_after=7)
+            msg_link = CollectibleHelpers.gen_msg_link(reaction_message.id, channel.id, ctx.guild.id)
+            await CollectibleHelpers.Embeds.edit_and_send_embed(msg_creating, embed,
+                                                                f"Reactions were added to your [message]({msg_link}).",
+                                                                delete_after=7)
 
             return
 
@@ -169,8 +169,9 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
         GuildData(str(ctx.guild.id)).collectible_messages.set(msg_uuid, combined_id)
         GuildData(str(ctx.guild.id)).collectible_reactions.insert(msg_uuid, collect_id)
 
-        msg_link = VirtualHelpers.gen_msg_link(reaction_message.id, channel.id, ctx.guild.id)
-        await VirtualHelpers.edit_and_send_embed(msg_creating, embed, f"[Message]({msg_link}) created.", delete_after=7)
+        msg_link = CollectibleHelpers.gen_msg_link(reaction_message.id, channel.id, ctx.guild.id)
+        await CollectibleHelpers.Embeds.edit_and_send_embed(msg_creating, embed, f"[Message]({msg_link}) created.",
+                                                            delete_after=7)
 
         await ctx.channel.delete_messages(messages)
 
@@ -187,12 +188,12 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
         Channel: The channel where the message is located.
         """
 
-        collect_id = VirtualHelpers.prepare_id(collect_id)
-        msg_uuid = VirtualHelpers.prepare_id(msg_uuid)
+        collect_id = CollectibleHelpers.prepare_id(collect_id)
+        msg_uuid = CollectibleHelpers.prepare_id(msg_uuid)
 
         combined_id = GuildData(str(ctx.guild.id)).collectible_messages.fetch_by_msg_uuid(msg_uuid)
 
-        embed = VirtualHelpers.default_embed()
+        embed = CollectibleHelpers.Embeds.default_embed()
 
         if combined_id:
             message_id = combined_id.split("_")[0]
@@ -203,16 +204,18 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
 
             reaction_emoji = GuildData(str(ctx.guild.id)).collectible_emojis.fetch_by_id(collect_id)
             if not reaction_emoji:
-                await VirtualHelpers.edit_and_send_embed(msg_removing, embed, "Error! Reaction emoji could not be "
-                                                                              "retrieved.", delete_after=7)
+                await CollectibleHelpers.Embeds.edit_and_send_embed(msg_removing, embed,
+                                                                    "Error! Reaction emoji could not be retrieved.",
+                                                                    delete_after=7)
                 return
 
             await reaction_message.clear_reaction(reaction_emoji)
 
             GuildData(str(ctx.guild.id)).collectible_reactions.delete_where(msg_uuid, collect_id)
 
-            await VirtualHelpers.edit_and_send_embed(
-                msg_removing, embed, f"Removed **{collect_id}** collectible from **{msg_uuid}** message.", delete_after=7)
+            await CollectibleHelpers.Embeds.edit_and_send_embed(
+                msg_removing, embed, f"Removed **{collect_id}** collectible from **{msg_uuid}** message.",
+                delete_after=7)
 
             messages = []
             log.debug(len(reaction_message.reactions))
@@ -251,11 +254,11 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
         Channel: The channel where the message is located.
         """
 
-        msg_uuid = VirtualHelpers.prepare_id(msg_uuid)
+        msg_uuid = CollectibleHelpers.prepare_id(msg_uuid)
 
         combined_id = GuildData(str(ctx.guild.id)).collectible_messages.fetch_by_msg_uuid(msg_uuid)
 
-        embed = VirtualHelpers.default_embed()
+        embed = CollectibleHelpers.Embeds.default_embed()
 
         if combined_id:
             message_id = combined_id.split("_")[0]
@@ -270,12 +273,12 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
                 if reaction_message:
                     await reaction_message.delete()
             except Exception:
-                await VirtualHelpers.edit_and_send_embed(
+                await CollectibleHelpers.Embeds.edit_and_send_embed(
                     msg_removing, embed, f"**{msg_uuid}** message has already been deleted.", delete_after=7)
                 return
 
-            await VirtualHelpers.edit_and_send_embed(msg_removing, embed, f"Removed the **{msg_uuid}** message.",
-                                                     delete_after=7)
+            await CollectibleHelpers.Embeds.edit_and_send_embed(msg_removing, embed,
+                                                                f"Removed the **{msg_uuid}** message.", delete_after=7)
 
     @collectibles_reaction.command(name="listmessages", aliases=["messages", "list"])
     @commands.guild_only()
@@ -287,7 +290,7 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
 
         guild_collect_msgs = GuildData(str(ctx.guild.id)).collectible_messages.fetch_all()
 
-        embed = VirtualHelpers.default_embed()
+        embed = CollectibleHelpers.Embeds.default_embed()
         embed.title += ": Reaction Message List"
 
         if not len(guild_collect_msgs) > 0:
@@ -300,7 +303,8 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
             ids = t[2].split("_")
 
             embed.add_field(name=t[1],
-                            value=f"[Jump!]({VirtualHelpers.gen_msg_link(ids[0], ids[1], ctx.guild.id)})", inline=True)
+                            value=f"[Jump!]({CollectibleHelpers.gen_msg_link(ids[0], ids[1], ctx.guild.id)})",
+                            inline=True)
 
             i += 1
 
