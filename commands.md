@@ -2,7 +2,7 @@
 **Commands Available:** 12
 | Name    | Description | Category | Aliases | Subcommands |
 |---------|-------------|----------|---------|-------------|
-| collectibles | Manage collectibles for the server. | Collectibles | collect, col, c | delete, list, set |
+| collectibles | Manage collectibles for the server. | Collectibles | collect, col, c | delete, give, list, set, take |
 | collectreact | Manage collectible reactions for the server. | Collectible Reactions | creact, creaction, cr | addtomessage, deletemessage, listmessages, removefrommsg |
 | commandsearch | Search for a command | Utility | cmdsearch, search | -- |
 | emojilist | Get a list of all emojis for the server | Utility | emojis | -- |

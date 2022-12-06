@@ -5,11 +5,13 @@ import time
 import discord
 # from emoji import EMOJI_DATA
 import emoji as emo
+from discord import Member
 from discord.ext import commands
 from discord.ext.commands import Context
 from discord.utils import escape_markdown
 
 from util.data.guild_data import GuildData
+from util.decorators import delete_original
 from util.virtual_helpers import VirtualHelpers
 
 # from discord.types.emoji import Emoji
@@ -41,6 +43,7 @@ class Collectibles(commands.Cog, name="Collectibles"):
     @collectibles.command(name="set", aliases=["add", "s", "a"])
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
+    @delete_original()
     async def collectible_set(self, ctx: Context, collect_id: str, emoji: str, *, display_name: str) -> None:
         """
         Set collectibles for the server
@@ -76,6 +79,7 @@ class Collectibles(commands.Cog, name="Collectibles"):
     @collectibles.command(name="delete", aliases=["remove"])
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
+    @delete_original()
     async def collectible_delete(self, ctx: Context, collect_id: str) -> None:
         """
         Delete a collectible from the server
@@ -113,6 +117,7 @@ class Collectibles(commands.Cog, name="Collectibles"):
     @collectibles.command(name="list", aliases=["collectibles", "show", "view"])
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
+    @delete_original()
     async def collectibles_list(self, ctx: Context) -> None:
         """
         List collectibles on the server
@@ -142,6 +147,68 @@ class Collectibles(commands.Cog, name="Collectibles"):
             i += 1
 
         await ctx.send(embed=embed)
+
+    @collectibles.command(name="give", aliases=["giveuser"])
+    @commands.guild_only()
+    @commands.has_permissions(manage_guild=True)
+    @delete_original()
+    async def collectibles_give(self, ctx: Context, user: Member, collect_id: str) -> None:
+        """
+        Give a user a collectible.
+
+        User: The user to give the collectible to.
+        Collect_ID: The ID of the collectible to give.
+        """
+
+        if not user:
+            await ctx.send("That user could not be found!", delete_after=7)
+            return
+
+        check_exists = GuildData(ctx.guild.id).collectibles.fetch_by_id(collect_id)
+        if not check_exists:
+            await ctx.send("That collectible does not exist yet!")
+            return
+
+        check_already_has = GuildData(ctx.guild.id).collectible_collection.fetch_by_user_id_where(
+            str(user.id), collect_id)
+        if check_already_has:
+            await ctx.send("That user already has that collectible!")
+            return
+
+        GuildData(ctx.guild.id).collectible_collection.insert(str(user.id), collect_id)
+
+        await ctx.send(f"*{user.name}* was given the `{collect_id}` collectible!", delete_after=7)
+
+    @collectibles.command(name="take", aliases=["takeuser"])
+    @commands.guild_only()
+    @commands.has_permissions(manage_guild=True)
+    @delete_original()
+    async def collectibles_take(self, ctx: Context, user: Member, collect_id: str) -> None:
+        """
+        Take a collectible from a user.
+
+        User: The user to take the collectible from.
+        Collect_ID: The ID of the collectible to take.
+        """
+
+        if not user:
+            await ctx.send("That user could not be found!", delete_after=7)
+            return
+
+        check_exists = GuildData(ctx.guild.id).collectibles.fetch_by_id(collect_id)
+        if not check_exists:
+            await ctx.send("That collectible does not exist yet!")
+            return
+
+        check_has = GuildData(ctx.guild.id).collectible_collection.fetch_by_user_id_where(
+            str(user.id), collect_id)
+        if not check_has:
+            await ctx.send("That user does not have that collectible!")
+            return
+
+        GuildData(ctx.guild.id).collectible_collection.delete_where(str(user.id), collect_id)
+
+        await ctx.send(f"Removed the `{collect_id}` collectible from *{user.name}*.")
 
 
 async def setup(bot):
