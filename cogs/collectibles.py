@@ -1,6 +1,7 @@
 import copy
 import logging
 import time
+from enum import Enum
 
 import discord
 # from emoji import EMOJI_DATA
@@ -12,7 +13,7 @@ from discord.utils import escape_markdown
 
 from util.data.guild_data import GuildData
 from util.decorators import delete_original
-from util.collectible_helpers import CollectibleHelpers
+from util.collectible_helpers import CollectibleHelpers, DataResults
 
 # from discord.types.emoji import Emoji
 
@@ -160,24 +161,12 @@ class Collectibles(commands.Cog, name="Collectibles"):
         Collect_ID: The ID of the collectible to give.
         """
 
-        if not user:
-            await ctx.send("That user could not be found!", delete_after=7)
-            return
-
-        check_exists = GuildData(ctx.guild.id).collectibles.fetch_by_id(collect_id)
-        if not check_exists:
-            await ctx.send("That collectible does not exist yet!")
-            return
-
-        check_already_has = GuildData(ctx.guild.id).collectible_collection.fetch_by_user_id_where(
-            str(user.id), collect_id)
-        if check_already_has:
-            await ctx.send("That user already has that collectible!")
-            return
-
-        GuildData(ctx.guild.id).collectible_collection.insert(str(user.id), collect_id)
-
-        await ctx.send(f"*{user.name}* was given the `{collect_id}` collectible!", delete_after=7)
+        result: Enum = CollectibleHelpers.Management.Users.add_collectible(user, ctx.guild.id, collect_id)
+        result_value: str = str(result.value)
+        if result == DataResults.SUCCESS_GIVE:
+            await ctx.send(result_value.format(user.name, collect_id))
+        else:
+            await ctx.send(result_value)
 
     @collectibles.command(name="take", aliases=["takeuser"])
     @commands.guild_only()
@@ -191,24 +180,12 @@ class Collectibles(commands.Cog, name="Collectibles"):
         Collect_ID: The ID of the collectible to take.
         """
 
-        if not user:
-            await ctx.send("That user could not be found!", delete_after=7)
-            return
-
-        check_exists = GuildData(ctx.guild.id).collectibles.fetch_by_id(collect_id)
-        if not check_exists:
-            await ctx.send("That collectible does not exist yet!")
-            return
-
-        check_has = GuildData(ctx.guild.id).collectible_collection.fetch_by_user_id_where(
-            str(user.id), collect_id)
-        if not check_has:
-            await ctx.send("That user does not have that collectible!")
-            return
-
-        GuildData(ctx.guild.id).collectible_collection.delete_where(str(user.id), collect_id)
-
-        await ctx.send(f"Removed the `{collect_id}` collectible from *{user.name}*.")
+        result: Enum = CollectibleHelpers.Management.Users.remove_collectible(user, ctx.guild.id, collect_id)
+        result_value: str = str(result.value)
+        if result == DataResults.SUCCESS_TAKE:
+            await ctx.send(result_value.format(user.name, collect_id))
+        else:
+            await ctx.send(result_value)
 
 
 async def setup(bot):
