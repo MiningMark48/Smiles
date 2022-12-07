@@ -288,6 +288,13 @@ class GuildData:
         def fetch_by_msg_uuid(self, msg_uuid: str, val_pos=1):
             return ValueHelper.list_tuple_value(self.fetch_all_by_msg_uuid(msg_uuid), val_pos)
 
+        def fetch_all_by_collect_id(self, collect_id: str):
+            sel = self.table.select().where(self.table.columns.collect_uuid == collect_id)
+            return list(self.conn.execute(sel))
+
+        def fetch_by_collect_id(self, collect_id: str, val_pos=2):
+            return ValueHelper.list_tuple_value(self.fetch_all_by_collect_id(collect_id), val_pos)
+
         def insert(self, msg_uuid: str, collect_uuid: str):
             self.insert_([{'msg_uuid': msg_uuid, 'collect_uuid': collect_uuid}])
 
@@ -350,6 +357,13 @@ class GuildData:
 
         def fetch_by_user_id(self, u_id: str, val_pos=1):
             return ValueHelper.list_tuple_value(self.fetch_all_by_user_id(u_id), val_pos)
+
+        def fetch_all_by_collect_id(self, collect_id: str):
+            sel = self.table.select().where(self.table.columns.uuid == collect_id)
+            return list(self.conn.execute(sel))
+
+        def fetch_by_collect_id(self, collect_id: str, val_pos=1):
+            return ValueHelper.list_tuple_value(self.fetch_all_by_user_id(collect_id), val_pos)
 
         def fetch_by_user_id_where(self, user_id: str, collect_uuid: str):
             val = self.fetch_by_user_id(user_id)

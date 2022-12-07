@@ -3,19 +3,15 @@ import logging
 import time
 from enum import Enum
 
-import discord
-# from emoji import EMOJI_DATA
-import emoji as emo
 from discord import Member
 from discord.ext import commands
 from discord.ext.commands import Context
 from discord.utils import escape_markdown
 
+from util.collectible_helpers import CollectibleHelpers, DataResults
 from util.data.guild_data import GuildData
 from util.decorators import delete_original
-from util.collectible_helpers import CollectibleHelpers, DataResults
 
-# from discord.types.emoji import Emoji
 
 start_time = time.time()
 log = logging.getLogger("smiles")
@@ -57,25 +53,15 @@ class Collectibles(commands.Cog, name="Collectibles"):
 
         msg = await ctx.send(embed=embed)
 
-        collect_id = CollectibleHelpers.prepare_id(collect_id)
-        display_name = display_name[:25]        # Limit display name to 25 chars
+        result: Enum = await CollectibleHelpers.Management.Collectibles.create_collectible(
+            ctx.guild, collect_id, display_name, emoji)
+        result_value: str = str(result.value)
 
-        check_emoji = discord.PartialEmoji.from_str(emoji)
-
-        if check_emoji.is_custom_emoji():
-            if await ctx.guild.fetch_emoji(check_emoji.id) is None:
-                await CollectibleHelpers.Embeds.edit_and_send_embed(
-                    msg, embed, "That emoji could not be found. Please try a different one.")
-                return
-        elif not emo.is_emoji(emoji):
+        if result == DataResults.SUCCESS_SET:
             await CollectibleHelpers.Embeds.edit_and_send_embed(
-                msg, embed, "That is not a valid emoji. Please try again!")
-
-        name = GuildData(str(ctx.guild.id)).collectibles.set(collect_id, display_name)
-        e = GuildData(str(ctx.guild.id)).collectible_emojis.set(collect_id, emoji)
-
-        await CollectibleHelpers.Embeds.edit_and_send_embed(
-            msg, embed, f"Set **{collect_id}** as *{name}* with {e} as the emoji.")
+                msg, embed, result_value.format(collect_id, display_name, emoji))
+        else:
+            await CollectibleHelpers.Embeds.edit_and_send_embed(msg, embed, result_value)
 
     @collectibles.command(name="delete", aliases=["remove"])
     @commands.guild_only()
@@ -86,34 +72,21 @@ class Collectibles(commands.Cog, name="Collectibles"):
         Delete a collectible from the server
         """
 
-        collect_id = CollectibleHelpers.prepare_id(collect_id)
-
-        res_collectibles = GuildData(str(ctx.guild.id)).collectibles.delete(collect_id)
-        res_emojis = GuildData(str(ctx.guild.id)).collectible_emojis.delete(collect_id)
-        res_collection = GuildData(str(ctx.guild.id)).collectible_collection.delete_where_collect_id(collect_id)
-        res_react = GuildData(str(ctx.guild.id)).collectible_reactions.delete_where_collect_id(collect_id)
-
-        final_result = res_collectibles and res_emojis and res_collection and res_react
-
         embed = CollectibleHelpers.Embeds.default_embed()
 
-        if final_result:
-            embed.description = f"Removed **{collect_id}** from the server."
-            await ctx.send(embed=embed)
-        else:
-            error_code = []
-            if not res_collectibles:
-                error_code.append("1001")
-            if not res_emojis:
-                error_code.append("1002")
-            if not res_collection:
-                error_code.append("1003")
-            if not res_react:
-                error_code.append("1004")
+        result: Enum = CollectibleHelpers.Management.Collectibles.delete_collectible(ctx.guild, collect_id)
+        result_value: str = str(result.value)
 
-            joined = 'x'.join(error_code)
-            embed.description = f"Unable to remove **{collect_id}** from the server.\n\n ```Error: {joined}```"
-            await ctx.send(embed=embed)
+        if result == DataResults.SUCCESS_DELETE:
+            embed.description = result_value.format(collect_id)
+        elif result in [DataResults.ERROR_DELETE_COLLECTIBLES, DataResults.ERROR_DELETE_COLLECTION,
+                        DataResults.ERROR_DELETE_EMOJI, DataResults.ERROR_DELETE_REACT]:
+            embed.description = f"Unable to remove **{collect_id}** from the server.\n\n " \
+                                f"```Error: {result_value}```"
+        else:
+            embed.description = result_value
+
+        await ctx.send(embed=embed)
 
     @collectibles.command(name="list", aliases=["collectibles", "show", "view"])
     @commands.guild_only()

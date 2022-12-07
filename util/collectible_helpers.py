@@ -1,10 +1,15 @@
+import logging
 import typing
 from enum import Enum
 from typing import Union
 
-from discord import Color, Embed, Message, User, Member
+import discord
+import emoji as emo
+from discord import Color, Embed, Message, User, Member, Guild
 
 from util.data.guild_data import GuildData
+
+log = logging.getLogger("smiles")
 
 
 class DataResults(Enum):
@@ -14,8 +19,17 @@ class DataResults(Enum):
 
     SUCCESS_GIVE = "*{0}* was given the `{1}` collectible!"
     SUCCESS_TAKE = "Removed the `{1}` collectible from *{0}*."
+    SUCCESS_SET = "Set **{0}** as *{1}* with {2} as the emoji."
+    SUCCESS_DELETE = "Deleted the **{0}** collectible from the server."
+    ERROR_DELETE_COLLECTIBLES = "Could not delete the collectible."
+    ERROR_DELETE_EMOJI = "Could not delete the emoji."
+    ERROR_DELETE_COLLECTION = "Could not remove from collection."
+    ERROR_DELETE_REACT = "Could not remove from reactions."
+    ERROR_DELETE = "There was an issue deleting that collectible."
     NO_USER = "That user could not be found!"
     NO_COLLECTIBLE = "That collectible does not exist yet!"
+    NO_EMOJI = "That emoji could not be found!"
+    INVALID_EMOJI = "That emoji is invalid."
     ALREADY_HAS = "That user already has that collectible!"
     DOES_NOT_HAVE = "That user does not have that collectible."
 
@@ -41,6 +55,69 @@ class CollectibleHelpers:
             await message.edit(embed=embed)
 
     class Management:
+
+        class Collectibles:
+
+            @staticmethod
+            async def create_collectible(guild: Guild, collect_id: str, display_name: str, emoji: str) -> DataResults:
+                """
+                Create a collectible on a server.
+
+                :param Guild guild: The server to create the collectible for.
+                :param str collect_id: The id of the collectible to create. Must be unique.
+                :param str display_name: The display name of the collectible to create.
+                :param str emoji: The emoji the collectible will use.
+                :return DataResults: Returns result of the attempted request
+                """
+
+                guild_id = str(guild.id)
+
+                collect_id = CollectibleHelpers.prepare_id(collect_id)
+                display_name = display_name[:25]  # Limit display name to 25 chars
+
+                check_emoji = discord.PartialEmoji.from_str(emoji)
+
+                if check_emoji.is_custom_emoji():
+                    if await guild.fetch_emoji(check_emoji.id) is None:
+                        return DataResults.NO_EMOJI
+                elif not emo.is_emoji(emoji):
+                    return DataResults.INVALID_EMOJI
+
+                GuildData(guild_id).collectibles.set(collect_id, display_name)
+                GuildData(guild_id).collectible_emojis.set(collect_id, emoji)
+
+                return DataResults.SUCCESS_SET
+
+            @staticmethod
+            def delete_collectible(guild: Guild, collect_id: str) -> DataResults:
+                """
+                Delete a collectible from a server.
+
+                :param Guild guild: The server to create the collectible for.
+                :param str collect_id: The id of the collectible to create. Must be unique.
+                :return DataResults: Returns result of the attempted request
+                """
+
+                guild_id = str(guild.id)
+
+                collect_id = CollectibleHelpers.prepare_id(collect_id)
+
+                # noinspection PyBroadException
+                try:
+                    res_collectibles = GuildData(guild_id).collectibles.delete(collect_id)
+                    res_emojis = GuildData(guild_id).collectible_emojis.delete(collect_id)
+
+                    final_result = res_collectibles and res_emojis
+                except Exception:
+                    final_result = False
+
+                if len(GuildData(guild_id).collectible_collection.fetch_all_by_collect_id(collect_id)) > 0:
+                    GuildData(guild_id).collectible_collection.delete_where_collect_id(collect_id)
+
+                if len(GuildData(guild.id).collectible_reactions.fetch_all_by_collect_id(collect_id)) > 0:
+                    GuildData(guild_id).collectible_reactions.delete_where_collect_id(collect_id)
+
+                return DataResults.SUCCESS_DELETE if final_result else DataResults.ERROR_DELETE
 
         class Users:
 
