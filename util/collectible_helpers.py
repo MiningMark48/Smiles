@@ -35,7 +35,6 @@ class DataResults(Enum):
 
 
 class CollectibleHelpers:
-
     class Embeds:
         @staticmethod
         def default_embed(title="Collectibles", color=Color.blurple(), author: User = None):
@@ -119,6 +118,45 @@ class CollectibleHelpers:
 
                 return DataResults.SUCCESS_DELETE if final_result else DataResults.ERROR_DELETE
 
+            @staticmethod
+            def join_data(guild_id: str, collect_id: str, hide_reactions=False, hide_collections=False) -> dict:
+                """
+                Join collectible data into a dictionary
+
+
+                :param str guild_id: The guild id to pull data from.
+                :param str collect_id: The unique ID of the collectible
+                :param bool hide_reactions: If True, reaction data is not shown
+                :param bool hide_collections: If True, collection data is not shown
+                :return dict: Returns dictionary of all the data joined.
+                """
+
+                collect_display_name = GuildData(guild_id).collectibles.fetch_by_id(collect_id)
+                collect_emoji = GuildData(guild_id).collectible_emojis.fetch_by_id(collect_id)
+
+                collect_reactions_raw = GuildData(guild_id).collectible_reactions.fetch_all_by_collect_id(collect_id)
+                collect_reactions = [c_id for _, c_id, _ in collect_reactions_raw]
+
+                collect_collection_raw = GuildData(guild_id).collectible_collection.fetch_all_by_collect_id(collect_id)
+                collect_collection = [c_id for _, c_id, _ in collect_collection_raw]
+
+                # GuildData(guild_id).collectible_messages.
+
+                data = {
+                    collect_id: {
+                        "display_name": collect_display_name,
+                        "emoji": collect_emoji,
+                    }
+                }
+
+                if not hide_reactions:
+                    data[collect_id].update({"reaction_messages": collect_reactions})
+
+                if not hide_collections:
+                    data[collect_id].update({"user_collections": collect_collection})
+
+                return data
+
         class Users:
 
             @staticmethod
@@ -194,4 +232,3 @@ class CollectibleHelpers:
     @staticmethod
     def gen_msg_link(message_id: Union[str, int], channel_id: Union[str, int], guild_id: Union[str, int]):
         return f"<https://discord.com/channels/{guild_id}/{channel_id}/{message_id}>"
-

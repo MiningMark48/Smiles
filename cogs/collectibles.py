@@ -1,4 +1,5 @@
 import copy
+import json
 import logging
 import time
 from enum import Enum
@@ -11,7 +12,6 @@ from discord.utils import escape_markdown
 from util.collectible_helpers import CollectibleHelpers, DataResults
 from util.data.guild_data import GuildData
 from util.decorators import delete_original
-
 
 start_time = time.time()
 log = logging.getLogger("smiles")
@@ -88,7 +88,7 @@ class Collectibles(commands.Cog, name="Collectibles"):
 
         await ctx.send(embed=embed)
 
-    @collectibles.command(name="list", aliases=["collectibles", "show", "view"])
+    @collectibles.command(name="list", aliases=["collectibles"])
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
     @delete_original()
@@ -159,6 +159,28 @@ class Collectibles(commands.Cog, name="Collectibles"):
             await ctx.send(result_value.format(user.name, collect_id))
         else:
             await ctx.send(result_value)
+
+    @collectibles.command(name="view")
+    @commands.guild_only()
+    @commands.has_permissions(manage_guild=True)
+    async def collectibles_view(self, ctx: Context, collect_ids: str, show_reactions=True, show_collections=False):
+        """
+        View data on collectibles
+
+        Enclosing a space-separated list of collectible ids in quotes does multiple at once
+        """
+
+        collect_ids_split = collect_ids.split(" ")
+
+        final_data = {}
+        for collect_id in collect_ids_split:
+            data = CollectibleHelpers.Management.Collectibles.join_data(str(ctx.guild.id), collect_id,
+                                                                        not show_reactions, not show_collections)
+
+            final_data.update(data)
+
+        formatted = json.dumps(final_data, indent=2)
+        await ctx.send(f"```json\n{formatted[:2000]}\n```")
 
 
 async def setup(bot):
