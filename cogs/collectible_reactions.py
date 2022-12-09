@@ -2,6 +2,7 @@ import asyncio
 import copy
 import logging
 import time
+from typing import Optional
 
 from discord import Message, TextChannel
 from discord.ext import commands
@@ -56,7 +57,8 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
     @collectibles_reaction.command(name="addtomessage", aliases=["addtomsg", "add", "set", "a"])
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
-    async def collectibles_add_to_msg(self, ctx: Context, collect_id: str, msg_uuid: str, channel: TextChannel) -> None:
+    async def collectibles_add_to_msg(self, ctx: Context, collect_id: str, msg_uuid: str,
+                                      channel: Optional[TextChannel]) -> None:
         """
         Add a collectible reaction to a message.
 
@@ -75,12 +77,15 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
         embed = CollectibleHelpers.Embeds.default_embed()
 
         if combined_id:
-            message_id = combined_id.split("_")[0]
+            combined_split = combined_id.split("_")
+            message_id = combined_split[0]
+            channel_id = combined_split[1]
 
             embed.description = "Adding reactions to existing message..."
             msg_creating = await ctx.send(embed=embed)
 
-            reaction_message = await channel.fetch_message(message_id)
+            reaction_channel = await ctx.guild.fetch_channel(channel_id)
+            reaction_message = await reaction_channel.fetch_message(message_id)
 
             reaction_emoji = GuildData(str(ctx.guild.id)).collectible_emojis.fetch_by_id(collect_id)
             if not reaction_emoji:
@@ -114,11 +119,11 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
 
             await reaction_message.add_reaction(reaction_emoji)
 
-            combined_id = f"{reaction_message.id}_{channel.id}"
+            combined_id = f"{reaction_message.id}_{channel_id}"
             GuildData(str(ctx.guild.id)).collectible_messages.set(msg_uuid, combined_id)
             GuildData(str(ctx.guild.id)).collectible_reactions.insert(msg_uuid, collect_id)
 
-            msg_link = CollectibleHelpers.gen_msg_link(reaction_message.id, channel.id, ctx.guild.id)
+            msg_link = CollectibleHelpers.gen_msg_link(reaction_message.id, channel_id, ctx.guild.id)
             await CollectibleHelpers.Embeds.edit_and_send_embed(msg_creating, embed,
                                                                 f"Reactions were added to your [message]({msg_link}).",
                                                                 delete_after=7)
@@ -142,6 +147,21 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
         if response.content.lower() not in ["yes", "y"]:
             await self.send_cancel_message(ctx)
             return
+
+        if not channel:
+            messages.append(await ctx.send("What channel would you like to send the message in?"))
+            response: Message = await self.wait_for_response(ctx)
+            messages.append(response)
+
+            if not response:
+                await self.send_cancel_message(ctx)
+                return
+
+            if not response.channel_mentions:
+                await self.send_cancel_message(ctx)
+                return
+
+            channel = response.channel_mentions[0]
 
         messages.append(await ctx.send("What would you like the message to say?"))
         response: Message = await self.wait_for_response(ctx)
