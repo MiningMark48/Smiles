@@ -5,14 +5,11 @@ import discord
 from discord import Color, Guild, TextChannel, Message
 from discord.ext import commands
 
+from util.collectible_helpers import CollectibleHelpers
 from util.data.guild_data import GuildData
 
 start_time = time.time()
 log = logging.getLogger("smiles")
-
-# TODO:
-#   [ ] Add embeds for DMs
-#   [ ] Move to "background" cog directory
 
 
 class CollectiblesReactionHandler(commands.Cog, name="Collectibles Reaction Handler"):
@@ -47,30 +44,23 @@ class CollectiblesReactionHandler(commands.Cog, name="Collectibles Reaction Hand
         if user == self.bot.user:
             return
 
-        # log.debug(payload)
-
         reaction_channel: TextChannel = await guild.fetch_channel(int(reaction_channel_id))
         reaction_message: Message = await reaction_channel.fetch_message(int(reaction_msg_id))
         if reaction_message.author != self.bot.user:
-            # log.debug("DIFFERENT MESSAGE")
             return
 
         combined_id = f"{reaction_msg_id}_{reaction_channel_id}"
 
         collectible_emojis = GuildData(reaction_guild_id).collectible_emojis.fetch_all()
-        # log.debug(collectible_emojis)
 
         emojis_filtered = filter(lambda r: reaction_emoji == r[2], collectible_emojis)
         list_emojis = list(emojis_filtered)
-        # log.debug(list_emojis)
 
         collectible_messages = GuildData(reaction_guild_id).collectible_messages.fetch_all()
-        # log.debug(collectible_messages)
 
         msgs_filtered = filter(lambda r: combined_id == r[2], collectible_messages)
         list_msgs = list(msgs_filtered)
         react_msg = list_msgs[0]
-        # log.debug(react_msg)
 
         collectible = GuildData(reaction_guild_id).collectible_reactions.fetch_all()
         collect_filtered = filter(lambda r: str(react_msg[1]) == r[1], collectible)
@@ -83,16 +73,14 @@ class CollectiblesReactionHandler(commands.Cog, name="Collectibles Reaction Hand
                     collect_id = collectible[2]
                     break
 
-        # log.debug(collect_id)
+        collect_name = GuildData(reaction_guild_id).collectibles.fetch_by_id(collect_id)
+        collect_emoji = GuildData(reaction_guild_id).collectible_emojis.fetch_by_id(collect_id)
 
-        collect_names = GuildData(reaction_guild_id).collectibles.fetch_all_by_id(collect_id)
-        collect_name = collect_names[0][2]
+        embed = CollectibleHelpers.Embeds.default_embed()
 
-        # await reaction_channel.send(f"You clicked the `{collect_name}` collectible!", delete_after=3)
+        embed.timestamp = reaction_message.created_at
 
         if add_mode:
-            # log.debug("Add collectible")
-
             check_for = GuildData(reaction_guild_id).collectible_collection.fetch_by_user_id_where(
                 str(reaction_user_id), collect_id)
             if check_for:
@@ -100,12 +88,14 @@ class CollectiblesReactionHandler(commands.Cog, name="Collectibles Reaction Hand
 
             GuildData(reaction_guild_id).collectible_collection.insert(str(reaction_user_id), collect_id)
 
-            await user.send(f"You got the `{collect_name}` collectible!")
+            embed.description = f"You got the {collect_emoji} **{collect_name}** collectible!"
+            await user.send(embed=embed)
         else:
             result = GuildData(reaction_guild_id).collectible_collection.delete_where(
                 str(reaction_user_id), collect_id)
             if result:
-                await user.send(f"You removed the `{collect_name}` collectible!")
+                embed.description = f"You removed the {collect_emoji} **{collect_name}** collectible!"
+                await user.send(embed=embed)
 
     @commands.Cog.listener("on_raw_message_delete")
     async def on_raw_message_delete(self, payload):
