@@ -21,7 +21,7 @@ class Collectibles(commands.Cog, name="Collectibles"):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.group(name="collectibles", aliases=["collect", "col", "c"])
+    @commands.group(name="collectibles", aliases=["collectible", "collect", "col", "c"])
     @commands.cooldown(1, 2)
     @commands.guild_only()
     async def collectibles(self, ctx):
@@ -181,6 +181,12 @@ class Collectibles(commands.Cog, name="Collectibles"):
 
         formatted = json.dumps(final_data, indent=2)
         await ctx.send(f"```json\n{formatted[:2000]}\n```")
+
+    # @collectibles.command(name="trade")
+    # @commands.guild_only()
+    # async def collectibles_trade(self, ctx: Context, user: Member, collect_id: str):
+    #
+    #     await ctx.send("Trade")
 
 
 async def setup(bot):

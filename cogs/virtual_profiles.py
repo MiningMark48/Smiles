@@ -56,7 +56,6 @@ class VirtualProfile(commands.Cog, name="Virtual Profile"):
         if profile_user.avatar and profile_user.avatar.url:
             embed.set_thumbnail(url=profile_user.avatar.url)
 
-        embed.set_footer(text="Sent")
         embed.timestamp = ctx.message.created_at
 
         embed.add_field(name="Joined Discord", value=profile_user.created_at.date(), inline=True)
@@ -77,6 +76,55 @@ class VirtualProfile(commands.Cog, name="Virtual Profile"):
 
         embed.add_field(name="Collectibles", value=' • '.join(collect_list), inline=False)
         await ctx.send(embed=embed)
+
+    @profile.command(name="collectibles", aliases=["collectiblelist", "c"])
+    @commands.guild_only()
+    @delete_original()
+    async def profile_collectibles(self, ctx: Context, user: Optional[Member] = None) -> None:
+        """
+        View a detailed list of your collectibles.
+        """
+
+        profile_user = user if user else ctx.author
+
+        color = profile_user.color if profile_user.color else Color.blurple()
+        embed = CollectibleHelpers.Embeds.default_embed(title=f"{profile_user.display_name}'s Profile: Collectibles",
+                                                        color=color)
+
+        if profile_user.avatar and profile_user.avatar.url:
+            embed.set_thumbnail(url=profile_user.avatar.url)
+
+        embed.timestamp = ctx.message.created_at
+
+        collectibles = GuildData(ctx.guild.id).collectible_collection.fetch_all_by_user_id(profile_user.id)
+
+        if not collectibles:
+            embed.description = "You have no collectibles"
+            await ctx.send(embed=embed)
+        else:
+            step = 25   # Max amount of fields allowed in an embed
+            for i in range(0, len(collectibles), step):
+                embed.clear_fields()
+                for _, _, collect_id in collectibles[i:i+step]:
+                    collect_display_names = GuildData(ctx.guild.id).collectibles.fetch_all_by_id(collect_id)
+                    collect_emojis = GuildData(ctx.guild.id).collectible_emojis.fetch_all_by_id(collect_id)
+
+                    if not collect_display_names or not collect_emojis:
+                        break
+
+                    collect_display_name = collect_display_names[0][2]
+                    collect_emoji = collect_emojis[0][2]
+
+                    # collect_list.append(f"{collect_emoji} {collect_display_name} \n`{collect_id}`")
+
+                    embed.add_field(name=f"{collect_emoji} {collect_display_name}", value=f"`{collect_id}`")
+
+                # embed.add_field(name="Collectibles", value='\n\n'.join(collect_list), inline=False)
+
+                if not embed.fields:
+                    embed.description = "There was an issue loading collectibles."
+
+                await ctx.send(embed=embed)
 
 
 async def setup(bot):
