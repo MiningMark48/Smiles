@@ -3,7 +3,7 @@
 extensions:
   - extension: collectibles
   - extension: collectible_reactions
-  - extension: collectibles_reaction_handler
+  - extension: background.collectibles_reaction_handler
   - extension: errors
   - extension: owner
   - extension: test
