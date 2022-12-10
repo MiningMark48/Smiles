@@ -129,6 +129,7 @@ dmypy.json
 # Pycharm
 *.xml
 *.iml
+.idea
 
 # VSCode
 *.code-workspace
