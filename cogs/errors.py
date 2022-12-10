@@ -89,5 +89,5 @@ class Errors(commands.Cog):
     #             await ctx.send("You forgot to give me input to repeat!")
 
 
-def setup(bot):
-    bot.add_cog(Errors(bot))
+async def setup(bot):
+    await bot.add_cog(Errors(bot))
