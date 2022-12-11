@@ -69,12 +69,19 @@ class VirtualProfile(commands.Cog, name="Virtual Profile"):
             collect_list.append("You have no collectibles!")
         else:
             for _, _, collect_id in collectibles:
-                collect_display_name = GuildData(ctx.guild.id).collectibles.fetch_all_by_id(collect_id)[0][2]
-                collect_emoji = GuildData(ctx.guild.id).collectible_emojis.fetch_all_by_id(collect_id)[0][2]
 
-                collect_list.append(f"{collect_emoji} {collect_display_name}")
+                collect_display_name = GuildData(ctx.guild.id).collectibles.fetch_by_id(collect_id)
+                collect_emoji = GuildData(ctx.guild.id).collectible_emojis.fetch_by_id(collect_id)
 
-        embed.add_field(name="Collectibles", value=' • '.join(collect_list), inline=False)
+                if collect_display_name and collect_emoji:
+                    collect_list.append(f"{collect_emoji} {collect_display_name}")
+
+        if collect_list:
+            embed.add_field(name="Collectibles", value=' • '.join(collect_list), inline=False)
+
+        if not embed.fields:
+            embed.description = "There was an issue loading collectibles."
+
         await ctx.send(embed=embed)
 
     @profile.command(name="collectibles", aliases=["collectiblelist", "c"])
@@ -106,18 +113,11 @@ class VirtualProfile(commands.Cog, name="Virtual Profile"):
             for i in range(0, len(collectibles), step):
                 embed.clear_fields()
                 for _, _, collect_id in collectibles[i:i+step]:
-                    collect_display_names = GuildData(ctx.guild.id).collectibles.fetch_all_by_id(collect_id)
-                    collect_emojis = GuildData(ctx.guild.id).collectible_emojis.fetch_all_by_id(collect_id)
+                    collect_display_name = GuildData(ctx.guild.id).collectibles.fetch_by_id(collect_id)
+                    collect_emoji = GuildData(ctx.guild.id).collectible_emojis.fetch_by_id(collect_id)
 
-                    if not collect_display_names or not collect_emojis:
-                        break
-
-                    collect_display_name = collect_display_names[0][2]
-                    collect_emoji = collect_emojis[0][2]
-
-                    # collect_list.append(f"{collect_emoji} {collect_display_name} \n`{collect_id}`")
-
-                    embed.add_field(name=f"{collect_emoji} {collect_display_name}", value=f"`{collect_id}`")
+                    if collect_display_name and collect_emoji:
+                        embed.add_field(name=f"{collect_emoji} {collect_display_name}", value=f"`{collect_id}`")
 
                 # embed.add_field(name="Collectibles", value='\n\n'.join(collect_list), inline=False)
 

@@ -1,3 +1,4 @@
+import asyncio
 import copy
 import json
 import logging
@@ -20,6 +21,32 @@ log = logging.getLogger("smiles")
 class Collectibles(commands.Cog, name="Collectibles"):
     def __init__(self, bot):
         self.bot = bot
+
+    async def wait_for_response(self, ctx: Context, timeout=30):
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel and len(m.content) <= 100
+
+        try:
+            return await self.bot.wait_for('message', check=check, timeout=timeout)
+        except asyncio.TimeoutError:
+            await ctx.send("Timed out.", delete_after=7)
+            return None
+
+    async def wait_for_response_dm(self, user: Member, timeout=30):
+        def check(m):
+            return m.author == user and m.channel == user.dm_channel and len(m.content) <= 100
+
+        try:
+            return await self.bot.wait_for('message', check=check, timeout=timeout)
+        except asyncio.TimeoutError:
+            await user.send("Timed out.", delete_after=7)
+            return None
+
+    @staticmethod
+    async def send_cancel_message(ctx: Context):
+        embed = CollectibleHelpers.Embeds.default_embed()
+        embed.description = "Ok! No worries. :smile:"
+        await ctx.send(embed=embed, delete_after=7)
 
     @commands.group(name="collectibles", aliases=["collectible", "collect", "col", "c"])
     @commands.cooldown(1, 2)
@@ -182,11 +209,81 @@ class Collectibles(commands.Cog, name="Collectibles"):
         formatted = json.dumps(final_data, indent=2)
         await ctx.send(f"```json\n{formatted[:2000]}\n```")
 
-    # @collectibles.command(name="trade")
-    # @commands.guild_only()
-    # async def collectibles_trade(self, ctx: Context, user: Member, collect_id: str):
-    #
-    #     await ctx.send("Trade")
+    @collectibles.command(name="trade")
+    @commands.guild_only()
+    async def collectibles_trade(self, ctx: Context, user: Member, collectible_give: str, collectible_receive: str):
+        """
+        Trade a collectible with another user.
+
+        User: The user to trade with
+        Collectible_Give: The ID of the collectible to give.
+        Collectible_Receive: The ID of the collectible to receive.
+        """
+
+        if not user or not await ctx.guild.fetch_member(user.id):
+            await ctx.send("That user could not be found!", delete_after=7)
+            return
+
+        if collectible_give == collectible_receive:
+            await ctx.send("Those are the same collectibles!")
+            return
+
+        author_has = CollectibleHelpers.Management.Users.has_collectible(
+            str(ctx.guild.id), str(ctx.author.id), collectible_give)
+        if not author_has:
+            await ctx.send("You do not have that collectible!", delete_after=7)
+            return
+
+        user_has = CollectibleHelpers.Management.Users.has_collectible(
+            str(ctx.guild.id), str(user.id), collectible_receive)
+        if not user_has:
+            await ctx.send("That user does not have that collectible!", delete_after=7)
+            return
+
+        author_has_want = CollectibleHelpers.Management.Users.has_collectible(
+            str(ctx.guild.id), str(ctx.author.id), collectible_receive)
+        if author_has_want:
+            await ctx.send("You already have that collectible!", delete_after=7)
+            return
+
+        user_has_get = CollectibleHelpers.Management.Users.has_collectible(
+            str(ctx.guild.id), str(user.id), collectible_give)
+        if user_has_get:
+            await ctx.send("That user already has that collectible!", delete_after=7)
+            return
+
+        await ctx.send(f"Asking {user.mention} if they want to trade...", delete_after=7)
+
+        await user.send(f"{ctx.author.mention} wants to trade his `{collectible_give}` collectible for your "
+                        f"`{collectible_receive}` collectible! \n\nWould you like to accept this trade? "
+                        f"`(Yes (Y)/ No (N))`")
+
+        response = await self.wait_for_response_dm(user, timeout=60)
+
+        if not response:
+            return
+
+        if response.content.lower() not in ["yes", "y"]:
+            await user.send("Ok!")
+            await ctx.send(f"{ctx.author.mention}, {user.mention} did not want to trade.")
+            return
+
+        # Add receiving collectible
+        CollectibleHelpers.Management.Users.add_collectible(ctx.author, ctx.guild.id, collectible_receive)
+
+        # Add giving collectible
+        CollectibleHelpers.Management.Users.add_collectible(user, ctx.guild.id, collectible_give)
+
+        # Take giving collectible
+        CollectibleHelpers.Management.Users.remove_collectible(ctx.author, ctx.guild.id, collectible_give)
+
+        # Take receiving collectible
+        CollectibleHelpers.Management.Users.remove_collectible(user, ctx.guild.id, collectible_receive)
+
+        await ctx.send("Trade successful!")
+        await user.send("Trade successful!")
+
+        # TODO: Upon successful trade, invoke the profile view command so they see their updated profile
 
 
 async def setup(bot):

@@ -370,10 +370,9 @@ class GuildData:
             if val is not None:
                 rep = self.table.select().where(
                     (self.table.columns.user_id == user_id) & (self.table.columns.uuid == collect_uuid))
-                items = list(self.conn.execute(rep))
-                return len(items) > 0
+                return list(self.conn.execute(rep))
             else:
-                return False
+                return None
 
         def insert(self, user_id: str, uuid: str):
             self.insert_([{'user_id': user_id, 'uuid': uuid}])

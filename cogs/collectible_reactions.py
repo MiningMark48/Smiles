@@ -242,7 +242,7 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
             # Subtracts one for the previously deleted message as the list hasn't updated yet
             if (len(reaction_message.reactions) - 1) <= 0:
                 messages.append(await ctx.send("I noticed that the message has no reactions now, would you like me to "
-                                               "delete the message now? `Yes (Y) / No (No)`"))
+                                               "delete the message now? `Yes (Y) / No (N)`"))
                 response: Message = await self.wait_for_response(ctx)
                 messages.append(response)
                 if not response:

@@ -119,6 +119,21 @@ class CollectibleHelpers:
                 return DataResults.SUCCESS_DELETE if final_result else DataResults.ERROR_DELETE
 
             @staticmethod
+            def collectible_exists(guild_id: str, collect_id: str) -> bool:
+                """
+                Check if a collectible exists.
+
+                :param str guild_id: The ID of the guild.
+                :param str collect_id: The ID of the collectible to check for.
+                :return bool: Returns True if the collectible exists.
+                """
+
+                collectible_name = GuildData(guild_id).collectibles.fetch_by_id(collect_id)
+                collectible_emoji = GuildData(guild_id).collectible_emojis.fetch_by_id(collect_id)
+
+                return collectible_name and collectible_emoji
+
+            @staticmethod
             def join_data(guild_id: str, collect_id: str, hide_reactions=False, hide_collections=False) -> dict:
                 """
                 Join collectible data into a dictionary
@@ -224,6 +239,20 @@ class CollectibleHelpers:
                 GuildData(guild_id).collectible_collection.delete_where(str(user.id), collect_id)
 
                 return DataResults.SUCCESS_TAKE
+
+            @staticmethod
+            def has_collectible(guild_id: str, user_id: str, collect_id: str):
+                """
+                Check if a user has a collectible.
+
+                :param str guild_id: The ID of the guild.
+                :param str user_id: The ID of the user to check.
+                :param str collect_id: The ID of the collectible to check for.
+                :return bool: Returns True if the user has the collectible.
+                """
+
+                collectibles = GuildData(guild_id).collectible_collection.fetch_by_user_id_where(user_id, collect_id)
+                return True if collectibles else False
 
     @staticmethod
     def prepare_id(uuid: str):
