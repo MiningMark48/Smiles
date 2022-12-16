@@ -1,8 +1,9 @@
 # Commands
-**Commands Available:** 12
+**Commands Available:** 13
 | Name    | Description | Category | Aliases | Subcommands |
 |---------|-------------|----------|---------|-------------|
 | collectibles | Manage collectibles for the server. | Collectibles | collectible, collect, col, c | delete, give, list, set, take, trade, view |
+| collectiblesmanager | Open a menu to help with managing collectibles. | Collectibles Menu | cm, collectibleshelper, ch | -- |
 | collectreact | Manage collectible reactions for the server. | Collectible Reactions | creact, creaction, cr | addtomessage, deletemessage, listmessages, removefrommsg |
 | commandsearch | Search for a command | Utility | cmdsearch, search | -- |
 | emojilist | Get a list of all emojis for the server | Utility | emojis | -- |

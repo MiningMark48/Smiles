@@ -57,7 +57,7 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
     @collectibles_reaction.command(name="addtomessage", aliases=["addtomsg", "add", "set", "a"])
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
-    async def collectibles_add_to_msg(self, ctx: Context, collect_id: str, msg_uuid: str,
+    async def collectibles_add_to_msg(self, ctx: Context, collect_id: Optional[str], msg_uuid: Optional[str],
                                       channel: Optional[TextChannel]) -> None:
         """
         Add a collectible reaction to a message.
@@ -69,12 +69,48 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
         Channel: The channel the message is located.
         """
 
+        embed = CollectibleHelpers.Embeds.default_embed()
+
+        # noinspection PyListCreation
+        messages = [ctx.message]  # Messages that are deleted after message creation.
+
+        if not collect_id:
+            messages.append(await ctx.send("What is the ID of the collectible you want to add to the message? "
+                                           "This is different than the display name."))
+
+            response: Message = await self.wait_for_response(ctx)
+            messages.append(response)
+
+            if not response:
+                await self.send_cancel_message(ctx)
+                await ctx.channel.delete_messages(messages)
+                return
+
+            collect_id = response.content
+
+            if not CollectibleHelpers.Management.Collectibles.collectible_exists(str(ctx.guild.id), collect_id):
+                await ctx.send("That collectible could not be found.", delete_after=7)
+                await ctx.channel.delete_messages(messages)
+                return
+
+        if not msg_uuid:
+            messages.append(
+                await ctx.send("What is the ID of the message you want to add the collectible's reaction to?"))
+
+            response: Message = await self.wait_for_response(ctx)
+            messages.append(response)
+
+            if not response:
+                await self.send_cancel_message(ctx)
+                await ctx.channel.delete_messages(messages)
+                return
+
+            msg_uuid = response.content
+
         collect_id = CollectibleHelpers.prepare_id(collect_id)
         msg_uuid = CollectibleHelpers.prepare_id(msg_uuid)
 
         combined_id = GuildData(str(ctx.guild.id)).collectible_messages.fetch_by_msg_uuid(msg_uuid)
-
-        embed = CollectibleHelpers.Embeds.default_embed()
 
         if combined_id:
             combined_split = combined_id.split("_")
@@ -92,6 +128,7 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
                 await CollectibleHelpers.Embeds.edit_and_send_embed(msg_creating, embed,
                                                                     "Error! Reaction emoji could not be retrieved.",
                                                                     delete_after=7)
+                await ctx.channel.delete_messages(messages)
                 return
 
             # log.debug(reaction_message.reactions)
@@ -103,18 +140,21 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
                                                                         "emoji associated with that collectible is "
                                                                         "already on that message with a reaction.",
                                                                         delete_after=7)
+                    await ctx.channel.delete_messages(messages)
                     return
 
             if reaction_emoji in reaction_message.reactions:
                 await CollectibleHelpers.Embeds.edit_and_send_embed(msg_creating, embed,
                                                                     "Error! Message already has that emoji as a "
                                                                     "reaction.", delete_after=7)
+                await ctx.channel.delete_messages(messages)
                 return
 
             if reaction_message.reactions == 20:
                 await CollectibleHelpers.Embeds.edit_and_send_embed(msg_creating, embed,
                                                                     "Error! Message has max amount of reactions!",
                                                                     delete_after=7)
+                await ctx.channel.delete_messages(messages)
                 return
 
             await reaction_message.add_reaction(reaction_emoji)
@@ -127,11 +167,9 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
             await CollectibleHelpers.Embeds.edit_and_send_embed(msg_creating, embed,
                                                                 f"Reactions were added to your [message]({msg_link}).",
                                                                 delete_after=7)
+            await ctx.channel.delete_messages(messages)
 
             return
-
-        # noinspection PyListCreation
-        messages = [ctx.message]  # Messages that are deleted after message creation.
 
         messages.append(await ctx.send(
             "It looks like that message doesn't exist yet, would you like to create it? `Yes (Y) / No (N)`"))
@@ -142,10 +180,12 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
         if not response:
             embed.description = "Error! No response."
             await ctx.send(embed=embed, delete_after=7)
+            await ctx.channel.delete_messages(messages)
             return
 
         if response.content.lower() not in ["yes", "y"]:
             await self.send_cancel_message(ctx)
+            await ctx.channel.delete_messages(messages)
             return
 
         if not channel:
@@ -155,10 +195,12 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
 
             if not response:
                 await self.send_cancel_message(ctx)
+                await ctx.channel.delete_messages(messages)
                 return
 
             if not response.channel_mentions:
                 await self.send_cancel_message(ctx)
+                await ctx.channel.delete_messages(messages)
                 return
 
             channel = response.channel_mentions[0]
@@ -168,6 +210,7 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
         messages.append(response)
         if not response:
             await self.send_cancel_message(ctx)
+            await ctx.channel.delete_messages(messages)
             return
 
         message_content = response.content[:2000]
@@ -181,6 +224,7 @@ class CollectibleReactions(commands.Cog, name="Collectible Reactions"):
         if not reaction_emoji:
             embed.description = "Error! Reaction emoji could not be retrieved."
             await ctx.send(embed=embed, delete_after=7)
+            await ctx.channel.delete_messages(messages)
             return
 
         await reaction_message.add_reaction(reaction_emoji)

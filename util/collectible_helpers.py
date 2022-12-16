@@ -134,6 +134,10 @@ class CollectibleHelpers:
                 return collectible_name and collectible_emoji
 
             @staticmethod
+            def fetch_collectibles(guild_id: str):
+                return GuildData(guild_id).collectibles.fetch_all()
+
+            @staticmethod
             def join_data(guild_id: str, collect_id: str, hide_reactions=False, hide_collections=False) -> dict:
                 """
                 Join collectible data into a dictionary

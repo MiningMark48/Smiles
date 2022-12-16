@@ -2,6 +2,7 @@
 
 extensions:
   - extension: collectibles
+  - extension: collectibles_menu
   - extension: collectible_reactions
   - extension: collectibles_reaction_handler
     directory: background

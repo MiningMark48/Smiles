@@ -4,8 +4,9 @@ import json
 import logging
 import time
 from enum import Enum
+from typing import Optional
 
-from discord import Member
+from discord import Member, Message
 from discord.ext import commands
 from discord.ext.commands import Context
 from discord.utils import escape_markdown
@@ -68,12 +69,55 @@ class Collectibles(commands.Cog, name="Collectibles"):
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
     @delete_original()
-    async def collectible_set(self, ctx: Context, collect_id: str, emoji: str, *, display_name: str) -> None:
+    async def collectible_set(self, ctx: Context, collect_id: Optional[str], emoji: Optional[str],
+                              *, display_name: Optional[str]) -> None:
         """
         Set collectibles for the server
 
         If a collectible's unique identifier already exists, this will overwrite it.
         """
+
+        messages = []
+
+        if not collect_id:
+            messages.append(await ctx.send("What would you like the **unique ID** of the collectible to be? "
+                                           "This is different than the display name."))
+
+            response: Message = await self.wait_for_response(ctx)
+            messages.append(response)
+
+            if not response:
+                await self.send_cancel_message(ctx)
+                await ctx.channel.delete_messages(messages)
+                return
+
+            collect_id = response.content
+
+        if not emoji:
+            messages.append(await ctx.send("What would you like the **emoji** of the collectible to be?"))
+
+            response: Message = await self.wait_for_response(ctx)
+            messages.append(response)
+
+            if not response:
+                await self.send_cancel_message(ctx)
+                await ctx.channel.delete_messages(messages)
+                return
+
+            emoji = response.content
+
+        if not display_name:
+            messages.append(await ctx.send("What would you like the **display name** of the collectible to be?"))
+
+            response: Message = await self.wait_for_response(ctx)
+            messages.append(response)
+
+            if not response:
+                await self.send_cancel_message(ctx)
+                await ctx.channel.delete_messages(messages)
+                return
+
+            display_name = response.content
 
         embed = CollectibleHelpers.Embeds.default_embed()
         embed.description = "Setting..."
