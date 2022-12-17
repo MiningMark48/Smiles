@@ -17,16 +17,22 @@ class CollectiblesDropdown(discord.ui.Select):
         super().__init__(placeholder="Choose collectibles to delete...", min_values=1, max_values=5, options=options)
 
     async def callback(self, interaction: Interaction):
+
+        values = [v for v in self.values if v != "--"]  # Do not allow "--" to do anything
+
+        if len(values) < 1:
+            await interaction.response.send_message("No collectibles deleted!", ephemeral=True)
+            return
+
         deleted = []
-        for col in self.values:
+        for col in values:
             col_id = [o.description for o in self.options if o.label == col][0].replace("ID: ", "")
-            log.debug(f"{col}: {col_id}")
+            # log.debug(f"{col}: {col_id}")
             deleted.append(col_id)
+
             CollectibleHelpers.Management.Collectibles.delete_collectible(interaction.guild, col_id)
 
-        # TODO: See why this isn't completing correctly
-
-        await interaction.response.send_message(f"Deleted the following roles: {', '.join(deleted)}", ephemeral=True)
+        await interaction.response.send_message(f"Deleted the following collectibles: `{', '.join(deleted)}`", ephemeral=True)
 
 
 class CollectiblesDropdownView(discord.ui.View):
@@ -66,7 +72,7 @@ class CollectiblesMenuView(discord.ui.View):
         await interaction.response.send_message(f'Only {self.user.name} can use this menu.', ephemeral=True)
         return False
 
-    @discord.ui.button(label="List Collectibles", style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="List Collectibles", style=discord.ButtonStyle.blurple, row=0)
     async def collectibles_list(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         self.value = "list"
 
@@ -75,7 +81,7 @@ class CollectiblesMenuView(discord.ui.View):
         self.stop()
         await self.message.delete()
 
-    @discord.ui.button(label="List Reactions", style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="List Reactions", style=discord.ButtonStyle.blurple, row=0)
     async def collectibles_reaction_list(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         self.value = "listreactions"
 
@@ -84,7 +90,7 @@ class CollectiblesMenuView(discord.ui.View):
         self.stop()
         await self.message.delete()
 
-    @discord.ui.button(label="Add Collectible", style=discord.ButtonStyle.green)
+    @discord.ui.button(label="Add Collectible", style=discord.ButtonStyle.green, row=1)
     async def collectibles_set(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         self.value = "set"
 
@@ -93,7 +99,7 @@ class CollectiblesMenuView(discord.ui.View):
         self.stop()
         await self.message.delete()
 
-    @discord.ui.button(label="Add to Message", style=discord.ButtonStyle.green)
+    @discord.ui.button(label="Add to Message", style=discord.ButtonStyle.green, row=1)
     async def collectibles_add_to_msg(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         self.value = "addtomsg"
 
@@ -102,7 +108,7 @@ class CollectiblesMenuView(discord.ui.View):
         self.stop()
         await self.message.delete()
 
-    @discord.ui.button(label="Delete Collectibles", style=discord.ButtonStyle.red)
+    @discord.ui.button(label="Delete Collectibles", style=discord.ButtonStyle.red, row=2)
     async def collectibles_delete(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         self.value = "delete"
 
@@ -151,12 +157,22 @@ class CollectiblesMenu(commands.Cog, name="Collectibles Menu"):
         elif view.value == "delete":
             collectibles = CollectibleHelpers.Management.Collectibles.fetch_collectibles(str(ctx.guild.id))
 
+            if len(collectibles) < 1:
+                await ctx.send("No collectibles found!", delete_after=7)
+                return
+
             ops = []
             for c in collectibles:
                 emoji = GuildData(ctx.guild.id).collectible_emojis.fetch_by_id(c[1])
                 ops.append(discord.SelectOption(label=c[2], description=f"ID: {c[1]}", emoji=emoji))
 
             ops = sorted(ops, key=lambda col: col.label)
+
+            if len(ops) < 5:
+                i = 0
+                while i < 5 - len(ops):
+                    ops.append(discord.SelectOption(label="--", description="--", emoji="🚫"))
+                    i += 1
             await ctx.channel.send(content="Select the collectibles to delete.",
                                    view=CollectiblesDropdownView(options=ops))
         else:

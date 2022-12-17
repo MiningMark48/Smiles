@@ -111,10 +111,18 @@ class CollectibleHelpers:
                     final_result = False
 
                 if len(GuildData(guild_id).collectible_collection.fetch_all_by_collect_id(collect_id)) > 0:
-                    GuildData(guild_id).collectible_collection.delete_where_collect_id(collect_id)
+                    # noinspection PyBroadException
+                    try:
+                        GuildData(guild_id).collectible_collection.delete_where_uuid(collect_id)
+                    except Exception:
+                        log.error("Error deleting from collection.")
 
                 if len(GuildData(guild.id).collectible_reactions.fetch_all_by_collect_id(collect_id)) > 0:
-                    GuildData(guild_id).collectible_reactions.delete_where_collect_id(collect_id)
+                    # noinspection PyBroadException
+                    try:
+                        GuildData(guild_id).collectible_reactions.delete_where_collect_id(collect_id)
+                    except Exception:
+                        log.error("Error deleting from reactions.")
 
                 return DataResults.SUCCESS_DELETE if final_result else DataResults.ERROR_DELETE
 
