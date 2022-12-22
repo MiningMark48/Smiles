@@ -2,11 +2,12 @@ import logging
 
 from discord.ext import commands, tasks
 
+from util.data.data_backup import DataBackups
 
 log = logging.getLogger("smiles")
 
 
-class MyCog(commands.Cog):
+class AutoBackup(commands.Cog):
     def __init__(self, bot):
         self.index = 0
         self.bot = bot
@@ -15,10 +16,11 @@ class MyCog(commands.Cog):
     def cog_unload(self) -> None:
         self.update_loop.cancel()
 
-    @tasks.loop(seconds=30)
+    @tasks.loop(hours=12)
     async def update_loop(self):
-        print(self.index)
-        self.index += 1
+        log.info("Auto backup commencing...")
+        DataBackups().backup_databases()    # TODO: Make backup folders use hours & minutes in the name
+        log.info("Auto backup complete.")
 
     @update_loop.before_loop
     async def before_printer(self):
@@ -27,4 +29,4 @@ class MyCog(commands.Cog):
 
 
 async def setup(bot):
-    await bot.add_cog(MyCog(bot))
+    await bot.add_cog(AutoBackup(bot))
