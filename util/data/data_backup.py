@@ -52,14 +52,17 @@ class DataBackups:
 
         only_files = [f for f in listdir(
             self.data_path) if isfile(join(self.data_path, f))]
+
+        skipped = 0
         for f in only_files:
             if f.startswith("_"):   # Skip backup on any files that start with '_' (Dev purposes)
+                skipped += 1
                 continue
             self.backup_file(zip, f"{self.data_path}{f}")
             log.debug(f"File Backup | {f}")
 
         log.info(
-            f"Backed up {len(only_files)} files to {self.backups_folder_name}/{subfolder_name}/{self.zip_name}")
+            f"Backed up {len(only_files) - skipped} files to {self.backups_folder_name}/{subfolder_name}/{self.zip_name}")
 
         log.success("Backup complete.")
 
