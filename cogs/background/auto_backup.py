@@ -9,7 +9,6 @@ log = logging.getLogger("smiles")
 
 class AutoBackup(commands.Cog):
     def __init__(self, bot):
-        self.index = 0
         self.bot = bot
         self.update_loop.start()
 
@@ -18,12 +17,12 @@ class AutoBackup(commands.Cog):
 
     @tasks.loop(hours=12)
     async def update_loop(self):
-        log.info("Auto backup commencing...")
-        DataBackups().backup_databases()    # TODO: Make backup folders use hours & minutes in the name
+        log.info("Auto backup starting...")
+        DataBackups().backup_databases()
         log.info("Auto backup complete.")
 
     @update_loop.before_loop
-    async def before_printer(self):
+    async def before_updater(self):
         log.info("Waiting for bot before auto backups begin...")
         await self.bot.wait_until_ready()
 

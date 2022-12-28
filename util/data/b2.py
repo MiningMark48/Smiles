@@ -15,6 +15,7 @@ class B2Backup:
     def get_config():
         return BotConfig().data["backups"]["b2_info"]
 
+    # noinspection PyUnresolvedReferences
     def backup(self, file_loc, file_name, folder_name):
 
         if not self.data:
@@ -35,13 +36,15 @@ class B2Backup:
         except Exception as e:
             log.fatal(f"Connection to B2 failed : \n\t{e}")
         else:
-            log.info("Connected to B2")
+            log.success("Connected to B2.")
 
             log.info("Starting backup upload to B2...")
+            remote_file_name = f"{self.data['bucket']['backup_folder_name']}/{folder_name}/{file_name}"
             bucket.upload_local_file(
                 local_file=file_loc,
-                file_name=f"{self.data['bucket']['backup_folder_name']}/{folder_name}/{file_name}",
+                file_name=remote_file_name,
                 file_infos={"how": "automated"},
             )
 
+            log.info(f"Backed up remotely to {remote_file_name}")
             log.success("Upload to B2 complete.")

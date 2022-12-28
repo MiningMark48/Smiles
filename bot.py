@@ -234,7 +234,7 @@ async def main():
 
         bot.unload_commands()
 
-        DataBackups().backup_databases()
+        # DataBackups().backup_databases()  # Disabled here as autobackup does it on start up as well
         log.lnbrk()
 
         bot.generate_commands_lists()

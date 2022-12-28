@@ -13,6 +13,7 @@ from util.config import BotConfig
 log = logging.getLogger("smiles")
 
 
+# noinspection PyUnresolvedReferences
 class DataBackups:
     def __init__(self):
         config = self.get_config()
@@ -22,6 +23,9 @@ class DataBackups:
         self.zip_name = config["zip_name"]
         self.b2_enabled = config["b2_enabled"]
 
+        split_zip_name = str(self.zip_name).split(".")
+        self.zip_name = f"{split_zip_name[0]}_{self.get_zip_ext()}.{split_zip_name[1]}"
+
     @staticmethod
     def get_config():
         return BotConfig().data["backups"]
@@ -29,6 +33,10 @@ class DataBackups:
     @staticmethod
     def get_subfolder_name():
         return str(dt.now().strftime('%m%d%y'))
+
+    @staticmethod
+    def get_zip_ext():
+        return str(dt.now().strftime('%H%M'))
 
     def backup_databases(self, always_run=True):
         subfolder_name = self.get_subfolder_name()
@@ -45,21 +53,25 @@ class DataBackups:
         only_files = [f for f in listdir(
             self.data_path) if isfile(join(self.data_path, f))]
         for f in only_files:
+            if f.startswith("_"):   # Skip backup on any files that start with '_' (Dev purposes)
+                continue
             self.backup_file(zip, f"{self.data_path}{f}")
             log.debug(f"File Backup | {f}")
 
-        log.success(
+        log.info(
             f"Backed up {len(only_files)} files to {self.backups_folder_name}/{subfolder_name}/{self.zip_name}")
+
+        log.success("Backup complete.")
 
         try:
             do_b2 = self.b2_enabled
         except KeyError:
-            log.warn("B2 Backups disabled, skipping...")
+            log.warn("Unable to pull from config. Assuming B2 Backups are disabled, skipping...")
         else:
             if do_b2:
                 B2Backup().backup(loczip, self.zip_name, subfolder_name)
             else:
-                log.warn("B2 Backups disabled, skipping...")
+                log.info("B2 Backups disabled, skipping...")
 
     def backup_file(self, zip, filename: str):
         folder_name = self.backups_folder_name
