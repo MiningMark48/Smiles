@@ -15,7 +15,7 @@ class AutoBackup(commands.Cog):
     def cog_unload(self) -> None:
         self.update_loop.cancel()
 
-    @tasks.loop(hours=12)
+    @tasks.loop(hours=1)
     async def update_loop(self):
         log.info("Auto backup starting...")
         DataBackups().backup_databases()
