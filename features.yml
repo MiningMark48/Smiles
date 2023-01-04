@@ -1,6 +1,13 @@
 # This file is for enabling/disabling bot features
 
 extensions:
+  - extension: auto_backup
+    directory: background
+    enabled: false
+  - extension: chat_activities
+  - extension: chat_activities_handler
+    directory: background
+    enabled: true
   - extension: collectibles
   - extension: collectibles_menu
   - extension: collectible_reactions
@@ -12,8 +19,7 @@ extensions:
     enabled: false
   - extension: utility
   - extension: virtual_profiles
-  - extension: auto_backup
-    directory: background
+
 
 
 commands:

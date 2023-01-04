@@ -1,7 +1,8 @@
 # Commands
-**Commands Available:** 13
+**Commands Available:** 14
 | Name    | Description | Category | Aliases | Subcommands |
 |---------|-------------|----------|---------|-------------|
+| activitymanagement | Manage chat activities for the server. | Activity Management | actmng, am | channelset |
 | collectibles | Manage collectibles for the server. | Collectibles | collectible, collect, col, c | delete, give, list, set, take, trade, view |
 | collectiblesmanager | Open a menu to help with managing collectibles. | Collectibles Menu | cm, collectibleshelper, ch | -- |
 | collectreact | Manage collectible reactions for the server. | Collectible Reactions | creact, creaction, cr | addtomessage, deletemessage, listmessages, removefrommsg |
