@@ -2,8 +2,9 @@ import logging
 import os.path as osp
 import random
 
+import discord
 import yaml
-from discord import Guild, TextChannel
+from discord import Guild, TextChannel, Color
 from discord.ext import commands, tasks
 
 from util.data.guild_data import GuildData
@@ -32,14 +33,22 @@ class ChatActivitiesHandler(commands.Cog):
 
                 self.quotes = data["quotes"]
 
+                log.info(f"Loaded {len(self.quotes)} quotes.")
+
     async def motivate(self, channel: TextChannel):
+        embed = discord.Embed(title="Motivational Quote", color=Color.blurple())
+
         random.shuffle(self.quotes)
         rand_quote = random.choice(self.quotes)
-        await channel.send(f"> {rand_quote['quote']}\n\nShared by: <@{rand_quote['share_credit']}>")
+        share_credit = f"<@{rand_quote['share_credit']}>" if "share_credit" in rand_quote else "`N/A`"
 
-    @tasks.loop(seconds=15)
+        embed.description = f"> {rand_quote['quote']}\n\nShared by: {share_credit}"
+
+        await channel.send(embed=embed)
+
+    @tasks.loop(minutes=15)
     async def activity_loop(self):
-        log.info("Chat activities are starting now.")
+        log.info("Chat activity loop begin...")
 
         rand_chance = 4     # TODO: Make config
 
@@ -64,7 +73,8 @@ class ChatActivitiesHandler(commands.Cog):
         await self.bot.wait_until_ready()
 
         log.info("Preparing activity information...")
-        self.load_motivation()
+
+        self.load_motivation()  # Loads quotes for motivation
 
         log.info("Chat activities are starting now.")
 

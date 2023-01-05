@@ -42,7 +42,7 @@ class Owner(commands.Cog, name="Owner"):
 
         for extension in get_extensions():
             try:
-                self.bot.reload_extension(extension)
+                await self.bot.reload_extension(extension)
                 log.debug(f"Reloaded {extension}")
             except commands.ExtensionError:
                 try:
