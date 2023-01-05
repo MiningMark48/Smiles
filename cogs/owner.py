@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import time
 from typing import Optional, Literal
@@ -5,6 +6,9 @@ from typing import Optional, Literal
 import discord
 from discord.ext import commands
 from discord.ext.commands import Context, Greedy
+
+from util.data.data_backup import DataBackups
+from util.features import get_extensions
 
 # from datetime import timezone
 
@@ -15,6 +19,75 @@ log = logging.getLogger("smiles")
 class Owner(commands.Cog, name="Owner"):
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.command(name="createbackup")
+    @commands.is_owner()
+    async def create_backup(self, ctx):
+        """Create a backup of bot data"""
+
+        await ctx.send("Creating backup...")
+        DataBackups().backup_databases()
+        await ctx.send("Backup created")
+
+    @commands.command(name="reloadall")
+    @commands.is_owner()
+    async def reload_all(self, ctx, create_backup=False):
+        """Reload all cogs"""
+
+        if create_backup:
+            cmd = self.bot.get_command("createbackup")
+            await ctx.invoke(cmd)
+
+        await ctx.send("Reload beginning...")
+
+        for extension in get_extensions():
+            try:
+                self.bot.reload_extension(extension)
+                log.debug(f"Reloaded {extension}")
+            except commands.ExtensionError:
+                try:
+                    self.bot.load_extension(extension)
+                except commands.ExtensionError as e:
+                    log.fatal(f"Error reloading : \n\t{e}")
+                    await ctx.send(f"Error reloading : `{e}`")
+                else:
+                    await ctx.send(f"**{extension}** loaded.")
+                    log.info(f"{extension} loaded.")
+
+        await ctx.send("Reloaded all cogs.")
+        log.info(f"{ctx.author} reloaded all cogs")
+
+    @commands.command()
+    @commands.is_owner()
+    async def shutdown(self, ctx, create_backup=False):
+        """Shut the bot down."""
+
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel
+
+        async def abort():
+            return await ctx.send("Bot shutdown aborted.")
+
+        await ctx.reply("**Are you sure you wish to initiate bot shutdown?**\n\tType *yes* to confirm.")
+
+        try:
+            entry = await self.bot.wait_for('message', check=check, timeout=10)
+        except asyncio.TimeoutError:
+            return await abort()
+
+        cleaned = entry.clean_content.lower()
+        if not cleaned.startswith("yes") or not cleaned.startswith("y"):
+            return await abort()
+
+        if create_backup:
+            cmd = self.bot.get_command("createbackup")
+            await ctx.invoke(cmd)
+
+        await ctx.send("Shutting down bot...")
+
+        log.info(f"{ctx.author} shutdown the bot")
+
+        await self.bot.close()
 
     @commands.command()
     @commands.guild_only()
