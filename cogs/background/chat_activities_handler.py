@@ -46,11 +46,11 @@ class ChatActivitiesHandler(commands.Cog):
 
         await channel.send(embed=embed)
 
-    @tasks.loop(minutes=15)
+    @tasks.loop(minutes=30)
     async def activity_loop(self):
         log.info("Chat activity loop begin...")
 
-        rand_chance = 4     # TODO: Make config
+        rand_chance = 6     # TODO: Make config
 
         for guild in self.bot.guilds:
             log.debug(guild)
