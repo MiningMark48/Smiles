@@ -7,7 +7,7 @@ extensions:
   - extension: chat_activities
   - extension: chat_activities_handler
     directory: background
-    enabled: true
+    enabled: false
   - extension: collectibles
   - extension: collectibles_menu
   - extension: collectible_reactions
