@@ -9,11 +9,16 @@ extensions:
     directory: background
     enabled: false
   - extension: collectibles
+    enabled: false
   - extension: collectibles_menu
+    enabled: false
   - extension: collectible_reactions
+    enabled: false
   - extension: collectibles_reaction_handler
+    enabled: false
     directory: background
   - extension: errors
+  - extension: music
   - extension: owner
   - extension: test
     enabled: false
